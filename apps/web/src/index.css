@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: #080D17;
+  color: #F8FAFC;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* User theme classes (Combo 03 - Charcoal Violet & Cyber Lime) */
+.user-theme-card {
+  background-color: rgba(60, 26, 71, 0.4);
+  border: 1px solid rgba(182, 255, 0, 0.25);
+}
+
+.user-theme-btn {
+  background-color: #B6FF00;
+  color: #080D17;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.user-theme-btn:hover {
+  background-color: #9fe000;
+  box-shadow: 0 0 15px rgba(182, 255, 0, 0.4);
+}
+
+/* Admin theme classes (Combo 05 - Fresh Canopy & Lime Sprout) */
+.admin-theme-card {
+  background-color: rgba(45, 62, 44, 0.4);
+  border: 1px solid rgba(228, 253, 151, 0.3);
+}
+
+.admin-theme-btn {
+  background-color: #E4FD97;
+  color: #2D3E2C;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.admin-theme-btn:hover {
+  background-color: #d1ef7e;
+  box-shadow: 0 0 15px rgba(228, 253, 151, 0.4);
+}

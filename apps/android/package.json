@@ -1,0 +1,16 @@
+{
+  "name": "@pdi/android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PDI Voice Artist Ranking System - Android Native Application",
+  "scripts": {
+    "sync": "cap sync android",
+    "open": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/status-bar": "^8.0.4"
+  }
+}

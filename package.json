@@ -1,0 +1,32 @@
+{
+  "name": "pdi-voice-artist-ranking-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PDI Voice Artist Ranking System - Production Full-Stack Platform",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:web",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspaces --if-present && cap sync android",
+    "test": "npm run test --workspace=apps/api",
+    "db:init": "npm run seed --workspace=apps/api",
+    "seed": "npm run seed --workspace=apps/api",
+    "android:sync": "cap sync android",
+    "android:build": "npm run build --workspace=apps/web && cap sync android",
+    "android:open": "cap open android"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/status-bar": "^8.0.4"
+  }
+}

@@ -1,0 +1,113 @@
+import path from 'path';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
+import { config } from './config/env.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import authRoutes from './routes/authRoutes.js';
+import roleProtectedRoutes from './routes/roleProtectedRoutes.js';
+import leaderboardRoutes from './routes/leaderboardRoutes.js';
+import artistRoutes from './routes/artistRoutes.js';
+import pointsRoutes from './routes/pointsRoutes.js';
+import appealRoutes from './routes/appealRoutes.js';
+import challengeRoutes from './routes/challengeRoutes.js';
+import submissionRoutes from './routes/submissionRoutes.js';
+import evaluationRoutes from './routes/evaluationRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import directorTalentRoutes from './routes/directorTalentRoutes.js';
+import { RANK_TIERS, AWARDS_CATALOG, DEDUCTIONS_CATALOG } from '@pdi/shared';
+
+
+export function createApp() {
+  const app = express();
+
+  // Security middlewares
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // configure specifically when serving static in prod
+    })
+  );
+
+  // CORS configuration
+  app.use(
+    cors({
+      origin: [config.corsOrigin, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    })
+  );
+
+  // Rate limiting for auth routes (prevent brute force)
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      success: false,
+      message: 'Too many requests from this IP, please try again after 15 minutes',
+      error: { code: 'RATE_LIMIT_EXCEEDED' },
+    },
+  });
+
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+  app.use(cookieParser(config.cookieSecret));
+
+  // Health check
+  app.get('/api/v1/health', (req, res) => {
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      service: 'pdi-voice-artist-ranking-api',
+      version: '1.0.0',
+    });
+  });
+
+  // Public system rank rules endpoint (accessible to visitors per PRD)
+  app.get('/api/v1/ranks', (req, res) => {
+    res.status(200).json({
+      success: true,
+      data: {
+        ranks: RANK_TIERS,
+        awards: AWARDS_CATALOG,
+        deductions: DEDUCTIONS_CATALOG,
+      },
+    });
+  });
+
+  // Static file serving for dev/test uploaded media
+  app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+
+  // API v1 routes
+  app.use('/api/v1/auth', authLimiter, authRoutes);
+  app.use('/api/v1/leaderboard', leaderboardRoutes);
+  app.use('/api/v1', artistRoutes);
+  app.use('/api/v1', pointsRoutes);
+  app.use('/api/v1', appealRoutes);
+  app.use('/api/v1', challengeRoutes);
+  app.use('/api/v1', submissionRoutes);
+  app.use('/api/v1', evaluationRoutes);
+  app.use('/api/v1/notifications', notificationRoutes);
+  app.use('/api/v1/director', directorTalentRoutes);
+  app.use('/api/v1', roleProtectedRoutes);
+
+
+
+  // Fallback 404 handler
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      message: `Route not found: ${req.method} ${req.originalUrl}`,
+      error: { code: 'NOT_FOUND' },
+    });
+  });
+
+  // Global error handler
+  app.use(errorHandler);
+
+  return app;
+}
