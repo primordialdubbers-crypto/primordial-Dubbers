@@ -1,14 +1,12 @@
-import http from 'http';
-import https from 'https';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
+const { URL } = require('url');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = '0.0.0.0';
+
 const candidateDistDirs = [
   path.resolve(__dirname, 'dist'),
   path.resolve(__dirname, 'apps/web/dist'),
@@ -59,7 +57,7 @@ const server = http.createServer((req, res) => {
 
     const proxyHeaders = { ...req.headers };
     proxyHeaders.host = targetUrl.host;
-    delete proxyHeaders['content-length']; // let node recalculate or chunk
+    delete proxyHeaders['content-length'];
 
     const proxyReq = client.request(
       targetUrl,
