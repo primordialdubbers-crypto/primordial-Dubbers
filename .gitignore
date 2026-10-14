@@ -4,9 +4,10 @@ node_modules/
 .pnp.js
 
 # Build Outputs
-dist/
+apps/*/dist/
 build/
 *.tsbuildinfo
+!packages/shared/dist/
 
 # Environment and Secrets (AGENTS.md Rule 5)
 .env
