@@ -239,7 +239,7 @@ export const CastingBoardPage: React.FC = () => {
 
     try {
       const idempotencyKey = `prop_dir_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const res = await fetch('/api/v1/points/propose', {
+      const res = await fetch('/api/v1/director/point-proposals', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

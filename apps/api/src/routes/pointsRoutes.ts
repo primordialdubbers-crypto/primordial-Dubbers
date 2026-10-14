@@ -17,6 +17,13 @@ router.post(
   PointsController.createPointProposal
 );
 
+router.post(
+  '/points/propose',
+  requireAuth,
+  requireRole('director', 'admin', 'superadmin'),
+  PointsController.createPointProposal
+);
+
 // Admin review of points proposals & approvals
 router.get(
   '/admin/point-proposals',
