@@ -1,4 +1,5 @@
 import http from 'http';
+import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -9,6 +10,7 @@ const __dirname = path.dirname(__filename);
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = '0.0.0.0';
 const DIST_DIR = path.resolve(__dirname, 'dist');
+const API_BACKEND_URL = process.env.VITE_API_URL || process.env.API_URL || 'https://pdiapi-production.up.railway.app';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -40,6 +42,49 @@ const server = http.createServer((req, res) => {
   if (pathname === '/healthz' || pathname === '/ping') {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('OK');
+    return;
+  }
+
+  // Reverse proxy API and uploads directly to Railway backend API
+  if (pathname.startsWith('/api') || pathname.startsWith('/uploads')) {
+    const targetUrl = new URL(req.url, API_BACKEND_URL);
+    const isHttps = targetUrl.protocol === 'https:';
+    const client = isHttps ? https : http;
+
+    const proxyHeaders = { ...req.headers };
+    proxyHeaders.host = targetUrl.host;
+    delete proxyHeaders['content-length']; // let node recalculate or chunk
+
+    const proxyReq = client.request(
+      targetUrl,
+      {
+        method: req.method,
+        headers: {
+          ...proxyHeaders,
+          host: targetUrl.host,
+        },
+      },
+      (proxyRes) => {
+        res.writeHead(proxyRes.statusCode, proxyRes.headers);
+        proxyRes.pipe(res, { end: true });
+      }
+    );
+
+    proxyReq.on('error', (err) => {
+      console.error('[API Proxy Error]:', err.message);
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            success: false,
+            message: 'Backend API service unavailable',
+            error: { code: 'BAD_GATEWAY', detail: err.message },
+          })
+        );
+      }
+    });
+
+    req.pipe(proxyReq, { end: true });
     return;
   }
 
@@ -80,10 +125,10 @@ function sendFile(res, filePath) {
   const ext = path.extname(filePath).toLowerCase();
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
-  // Cache static assets aggressively, keep index.html fresh
-  const cacheControl = ext === '.html'
-    ? 'no-cache, no-store, must-revalidate'
-    : 'public, max-age=31536000, immutable';
+  const cacheControl =
+    ext === '.html'
+      ? 'no-cache, no-store, must-revalidate'
+      : 'public, max-age=31536000, immutable';
 
   fs.readFile(filePath, (err, content) => {
     if (err) {
@@ -103,4 +148,5 @@ function sendFile(res, filePath) {
 server.listen(PORT, HOST, () => {
   console.log(`PDI Web Server is running on http://${HOST}:${PORT}`);
   console.log(`Serving static files from: ${DIST_DIR}`);
+  console.log(`Proxying /api and /uploads to: ${API_BACKEND_URL}`);
 });
