@@ -57,6 +57,18 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
   app.use(cookieParser(config.cookieSecret));
 
+  // Root status check
+  app.get('/', (req, res) => {
+    res.status(200).json({
+      status: 'online',
+      service: 'Primordial Dubbers India — API',
+      version: '1.0.0',
+      health: '/api/v1/health',
+      ranks: '/api/v1/ranks',
+      docs: 'https://github.com/primordialdubbers-crypto/primordial-Dubbers',
+    });
+  });
+
   // Health check
   app.get('/api/v1/health', (req, res) => {
     res.status(200).json({
