@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -69,12 +70,12 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
   app.use(cookieParser(config.cookieSecret));
 
-  // Root status check
-  app.get('/', (req, res) => {
+  // Root status check (fallback if frontend dist not present)
+  app.get('/api', (req, res) => {
     res.status(200).json({
       status: 'online',
       service: 'Primordial Dubbers India — API',
-      version: '1.0.1',
+      version: '1.0.2',
       health: '/api/v1/health',
       ranks: '/api/v1/ranks',
       docs: 'https://github.com/primordialdubbers-crypto/primordial-Dubbers',
@@ -119,9 +120,26 @@ export function createApp() {
   app.use('/api/v1/director', directorTalentRoutes);
   app.use('/api/v1', roleProtectedRoutes);
 
+  // Serve Frontend React SPA if dist folder exists
+  const candidateDistPaths = [
+    path.resolve(process.cwd(), '../web/dist'),
+    path.resolve(process.cwd(), 'apps/web/dist'),
+    path.resolve(__dirname, '../../web/dist'),
+    path.resolve(__dirname, '../../../apps/web/dist'),
+  ];
+  const webDistPath = candidateDistPaths.find((p) => fs.existsSync(path.join(p, 'index.html')));
 
+  if (webDistPath) {
+    app.use(express.static(webDistPath));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+        return next();
+      }
+      res.sendFile(path.join(webDistPath, 'index.html'));
+    });
+  }
 
-  // Fallback 404 handler
+  // Fallback 404 handler for unmatched API routes
   app.use((req, res) => {
     res.status(404).json({
       success: false,
