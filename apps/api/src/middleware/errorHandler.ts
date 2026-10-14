@@ -44,6 +44,7 @@ export function errorHandler(
     message: isDev ? err.message : 'Internal Server Error',
     error: {
       code: 'INTERNAL_ERROR',
+      detail: err.message,
       ...(isDev ? { stack: err.stack } : {}),
     },
   });

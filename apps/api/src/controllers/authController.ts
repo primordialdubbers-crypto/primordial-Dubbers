@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import {
   registerSchema,
@@ -143,91 +143,95 @@ export async function register(req: Request, res: Response): Promise<void> {
   });
 }
 
-export async function login(req: Request, res: Response): Promise<void> {
-  const parseResult = loginSchema.safeParse(req.body);
-  if (!parseResult.success) {
-    res.status(400).json({
-      success: false,
-      message: 'Invalid login details.',
-      error: { code: 'VALIDATION_ERROR', details: parseResult.error.flatten() },
+export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const parseResult = loginSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid login details.',
+        error: { code: 'VALIDATION_ERROR', details: parseResult.error.flatten() },
+      });
+      return;
+    }
+
+    const { email, password } = parseResult.data;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid email or password.',
+        error: { code: 'INVALID_CREDENTIALS' },
+      });
+      return;
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid email or password.',
+        error: { code: 'INVALID_CREDENTIALS' },
+      });
+      return;
+    }
+
+    if (user.status !== 'active') {
+      res.status(403).json({
+        success: false,
+        message: `Account is ${user.status}. Please contact an administrator.`,
+        error: { code: 'ACCOUNT_INACTIVE' },
+      });
+      return;
+    }
+
+    const artistProfile = await ArtistProfile.findOne({ userId: user._id });
+
+    const token = signToken({
+      userId: user._id.toString(),
+      email: user.email,
+      roles: user.roles,
     });
-    return;
-  }
 
-  const { email, password } = parseResult.data;
+    setAuthCookie(res, token);
 
-  const user = await User.findOne({ email });
-  if (!user) {
-    res.status(401).json({
-      success: false,
-      message: 'Invalid email or password.',
-      error: { code: 'INVALID_CREDENTIALS' },
+    const userSummary: UserSummary = {
+      id: user._id.toString(),
+      email: user.email,
+      displayName: user.displayName,
+      roles: user.roles,
+      status: user.status,
+      createdAt: user.createdAt.toISOString(),
+    };
+
+    const profileSummary: ArtistProfileSummary | undefined = artistProfile
+      ? {
+          userId: artistProfile.userId.toString(),
+          displayName: artistProfile.displayName,
+          bio: artistProfile.bio,
+          voiceTypes: artistProfile.voiceTypes,
+          publicOptIn: artistProfile.publicOptIn,
+          rankPoints: artistProfile.rankPoints,
+          currentRank: artistProfile.currentRank,
+          performanceAverage: artistProfile.performanceAverage,
+        }
+      : undefined;
+
+    const responseData: AuthSessionResponse = {
+      user: userSummary,
+      profile: profileSummary,
+      token,
+    };
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful.',
+      data: responseData,
     });
-    return;
+  } catch (error) {
+    next(error);
   }
-
-  const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-  if (!isPasswordValid) {
-    res.status(401).json({
-      success: false,
-      message: 'Invalid email or password.',
-      error: { code: 'INVALID_CREDENTIALS' },
-    });
-    return;
-  }
-
-  if (user.status !== 'active') {
-    res.status(403).json({
-      success: false,
-      message: `Account is ${user.status}. Please contact an administrator.`,
-      error: { code: 'ACCOUNT_INACTIVE' },
-    });
-    return;
-  }
-
-  const artistProfile = await ArtistProfile.findOne({ userId: user._id });
-
-  const token = signToken({
-    userId: user._id.toString(),
-    email: user.email,
-    roles: user.roles,
-  });
-
-  setAuthCookie(res, token);
-
-  const userSummary: UserSummary = {
-    id: user._id.toString(),
-    email: user.email,
-    displayName: user.displayName,
-    roles: user.roles,
-    status: user.status,
-    createdAt: user.createdAt.toISOString(),
-  };
-
-  const profileSummary: ArtistProfileSummary | undefined = artistProfile
-    ? {
-        userId: artistProfile.userId.toString(),
-        displayName: artistProfile.displayName,
-        bio: artistProfile.bio,
-        voiceTypes: artistProfile.voiceTypes,
-        publicOptIn: artistProfile.publicOptIn,
-        rankPoints: artistProfile.rankPoints,
-        currentRank: artistProfile.currentRank,
-        performanceAverage: artistProfile.performanceAverage,
-      }
-    : undefined;
-
-  const responseData: AuthSessionResponse = {
-    user: userSummary,
-    profile: profileSummary,
-    token,
-  };
-
-  res.status(200).json({
-    success: true,
-    message: 'Login successful.',
-    data: responseData,
-  });
 }
 
 export async function logout(req: Request, res: Response): Promise<void> {
