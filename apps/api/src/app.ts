@@ -33,7 +33,19 @@ export function createApp() {
   // CORS configuration
   app.use(
     cors({
-      origin: [config.corsOrigin, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (
+          origin.includes('railway.app') ||
+          origin.includes('localhost') ||
+          origin.includes('127.0.0.1') ||
+          origin.startsWith('capacitor://') ||
+          (config.corsOrigin && origin === config.corsOrigin)
+        ) {
+          return callback(null, true);
+        }
+        return callback(null, true);
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

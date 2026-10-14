@@ -8,8 +8,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
-const HOST = '0.0.0.0';
-const DIST_DIR = path.resolve(__dirname, 'dist');
+const candidateDistDirs = [
+  path.resolve(__dirname, 'dist'),
+  path.resolve(__dirname, 'apps/web/dist'),
+  path.resolve(process.cwd(), 'dist'),
+  path.resolve(process.cwd(), 'apps/web/dist'),
+];
+const DIST_DIR = candidateDistDirs.find((d) => fs.existsSync(path.join(d, 'index.html'))) || candidateDistDirs[0];
 const API_BACKEND_URL = process.env.VITE_API_URL || process.env.API_URL || 'https://pdiapi-production.up.railway.app';
 
 const MIME_TYPES = {
