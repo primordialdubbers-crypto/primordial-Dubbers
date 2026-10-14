@@ -48,7 +48,8 @@ export function createApp() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['Set-Cookie'],
   });
 
   app.use(corsMiddleware);
@@ -83,13 +84,18 @@ export function createApp() {
     });
   });
 
+  // System Health and liveness endpoints for Railway / cloud runners
+  app.get(['/healthz', '/ping'], (req, res) => {
+    res.status(200).send('OK');
+  });
+
   // Health check
   app.get('/api/v1/health', (req, res) => {
     res.status(200).json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       service: 'pdi-voice-artist-ranking-api',
-      version: '1.0.3',
+      version: '1.0.4',
     });
   });
 
@@ -131,11 +137,22 @@ export function createApp() {
   const webDistPath = candidateDistPaths.find((p) => fs.existsSync(path.join(p, 'index.html')));
 
   if (webDistPath) {
-    app.use(express.static(webDistPath));
+    app.use(
+      express.static(webDistPath, {
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          } else {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          }
+        },
+      })
+    );
     app.get('*', (req, res, next) => {
       if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
         return next();
       }
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.sendFile(path.join(webDistPath, 'index.html'));
     });
   }
