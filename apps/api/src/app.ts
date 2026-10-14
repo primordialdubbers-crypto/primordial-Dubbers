@@ -32,26 +32,27 @@ export function createApp() {
   );
 
   // CORS configuration
-  app.use(
-    cors({
-      origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        if (
-          origin.includes('railway.app') ||
-          origin.includes('localhost') ||
-          origin.includes('127.0.0.1') ||
-          origin.startsWith('capacitor://') ||
-          (config.corsOrigin && origin === config.corsOrigin)
-        ) {
-          return callback(null, true);
-        }
+  const corsMiddleware = cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        origin.includes('railway.app') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1') ||
+        origin.startsWith('capacitor://') ||
+        (config.corsOrigin && origin === config.corsOrigin)
+      ) {
         return callback(null, true);
-      },
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    })
-  );
+      }
+      return callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  });
+
+  app.use(corsMiddleware);
+  app.options('*', corsMiddleware);
 
   // Rate limiting for auth routes (prevent brute force)
   const authLimiter = rateLimit({
