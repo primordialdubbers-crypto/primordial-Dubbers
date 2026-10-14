@@ -32,7 +32,7 @@ function createApp() {
         contentSecurityPolicy: false, // configure specifically when serving static in prod
     }));
     // CORS configuration
-    app.use((0, cors_1.default)({
+    const corsMiddleware = (0, cors_1.default)({
         origin: (origin, callback) => {
             if (!origin)
                 return callback(null, true);
@@ -48,7 +48,9 @@ function createApp() {
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    }));
+    });
+    app.use(corsMiddleware);
+    app.options('*', corsMiddleware);
     // Rate limiting for auth routes (prevent brute force)
     const authLimiter = (0, express_rate_limit_1.default)({
         windowMs: 15 * 60 * 1000, // 15 minutes
