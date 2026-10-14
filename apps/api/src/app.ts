@@ -74,7 +74,7 @@ export function createApp() {
     res.status(200).json({
       status: 'online',
       service: 'Primordial Dubbers India — API',
-      version: '1.0.0',
+      version: '1.0.1',
       health: '/api/v1/health',
       ranks: '/api/v1/ranks',
       docs: 'https://github.com/primordialdubbers-crypto/primordial-Dubbers',
@@ -87,7 +87,7 @@ export function createApp() {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       service: 'pdi-voice-artist-ranking-api',
-      version: '1.0.0',
+      version: '1.0.1',
     });
   });
 
