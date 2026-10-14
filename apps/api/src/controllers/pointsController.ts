@@ -280,11 +280,13 @@ export class PointsController {
    */
   static async approvePointProposal(req: Request, res: Response, next: NextFunction) {
     try {
-      const actorId = (req as any).user?.id;
+      const user = (req as any).user;
+      const actorId = user?.id;
+      const isSuperadmin = user?.roles?.includes('superadmin') || false;
       const { id } = req.params;
       const { decisionNote } = req.body || {};
 
-      const result = await PointsService.approveProposal(id, actorId, decisionNote);
+      const result = await PointsService.approveProposal(id, actorId, decisionNote, isSuperadmin);
 
       res.status(200).json({
         success: true,

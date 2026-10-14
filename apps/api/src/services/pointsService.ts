@@ -323,7 +323,8 @@ export class PointsService {
   static async approveProposal(
     proposalId: string,
     decidedBy: string,
-    decisionNote?: string
+    decisionNote?: string,
+    isSuperadmin: boolean = false
   ): Promise<PointMutationResult> {
     const proposal = await PointProposal.findById(proposalId);
     if (!proposal) {
@@ -334,12 +335,14 @@ export class PointsService {
       throw new Error(`PROPOSAL_ALREADY_DECIDED: Proposal is already ${proposal.status}`);
     }
 
-    // PRD: Reject unauthorized or self-approval where policy forbids it
-    if (proposal.requestedBy.toString() === decidedBy) {
-      throw new Error('SELF_APPROVAL_FORBIDDEN: Requesters cannot approve their own point proposals');
-    }
+    // PRD: Policy strictly forbids any user from approving points for THEMSELVES (prevents self-ranking fraud)
     if (proposal.studentId.toString() === decidedBy) {
       throw new Error('SELF_APPROVAL_FORBIDDEN: Administrators cannot approve point proposals for themselves');
+    }
+
+    // Dual-control: Standard requesters cannot approve their own point proposals unless superadmin clearance applies
+    if (proposal.requestedBy.toString() === decidedBy && !isSuperadmin) {
+      throw new Error('SELF_APPROVAL_FORBIDDEN: Requesters cannot approve their own point proposals');
     }
 
     const result = await this.applyPointMutation({
