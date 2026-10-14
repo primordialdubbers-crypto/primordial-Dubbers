@@ -14,7 +14,7 @@ const candidateDistDirs = [
   path.resolve(process.cwd(), 'apps/web/dist'),
 ];
 const DIST_DIR = candidateDistDirs.find((d) => fs.existsSync(path.join(d, 'index.html'))) || candidateDistDirs[0];
-const API_BACKEND_URL = process.env.VITE_API_URL || process.env.API_URL || 'https://pdiapi-production.up.railway.app';
+const API_BACKEND_URL = process.env.VITE_API_URL || process.env.API_URL || 'https://pdi-voice-ranking.up.railway.app';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
