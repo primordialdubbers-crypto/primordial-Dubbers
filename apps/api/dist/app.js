@@ -71,7 +71,7 @@ function createApp() {
         res.status(200).json({
             status: 'online',
             service: 'Primordial Dubbers India — API',
-            version: '1.0.2',
+            version: '1.0.3',
             health: '/api/v1/health',
             ranks: '/api/v1/ranks',
             docs: 'https://github.com/primordialdubbers-crypto/primordial-Dubbers',
@@ -83,7 +83,7 @@ function createApp() {
             status: 'healthy',
             timestamp: new Date().toISOString(),
             service: 'pdi-voice-artist-ranking-api',
-            version: '1.0.1',
+            version: '1.0.3',
         });
     });
     // Public system rank rules endpoint (accessible to visitors per PRD)
