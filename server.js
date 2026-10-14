@@ -8,6 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
+const HOST = '0.0.0.0';
 const candidateDistDirs = [
   path.resolve(__dirname, 'dist'),
   path.resolve(__dirname, 'apps/web/dist'),

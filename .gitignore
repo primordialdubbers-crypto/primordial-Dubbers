@@ -8,6 +8,7 @@ apps/*/dist/
 build/
 *.tsbuildinfo
 !packages/shared/dist/
+!apps/web/dist/
 
 # Environment and Secrets (AGENTS.md Rule 5)
 .env
