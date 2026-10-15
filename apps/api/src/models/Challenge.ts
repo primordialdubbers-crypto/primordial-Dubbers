@@ -13,6 +13,8 @@ export interface IChallenge extends Document {
   deadline?: Date | null;
   isActive: boolean;
   tags: string[];
+  assignedStudentIds: mongoose.Types.ObjectId[];
+  isPersonal: boolean;
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -77,6 +79,16 @@ const challengeSchema = new Schema<IChallenge>(
       default: [],
       index: true,
     },
+    assignedStudentIds: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+      default: [],
+      index: true,
+    },
+    isPersonal: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
@@ -89,6 +101,7 @@ const challengeSchema = new Schema<IChallenge>(
 );
 
 challengeSchema.index({ isActive: 1, difficulty: 1, targetRank: 1 });
+challengeSchema.index({ isPersonal: 1, assignedStudentIds: 1 });
 challengeSchema.index({ createdAt: -1 });
 
 export const Challenge: Model<IChallenge> =

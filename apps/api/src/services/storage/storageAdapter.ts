@@ -31,9 +31,25 @@ export const ALLOWED_AUDIO_MIMES = [
   'audio/x-wav',
   'audio/mp3',
   'audio/aac',
+  'audio/m4a',
+  'audio/x-m4a',
+];
+
+export const ALLOWED_VIDEO_MIMES = [
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
+  'video/quicktime',
+  'video/x-matroska',
+];
+
+export const ALLOWED_MEDIA_MIMES = [
+  ...ALLOWED_AUDIO_MIMES,
+  ...ALLOWED_VIDEO_MIMES,
 ];
 
 export const MAX_AUDIO_FILE_SIZE = 50 * 1024 * 1024; // 50MB per PRD
+export const MAX_MEDIA_FILE_SIZE = 150 * 1024 * 1024; // 150MB for video reference clips
 
 export class LocalStorageAdapter implements StorageAdapter {
   private baseDir: string;
@@ -50,17 +66,30 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   async uploadFile(file: UploadedFilePayload, folder = 'audio'): Promise<StorageUploadResult> {
     const mimeNormalized = file.mimetype.toLowerCase();
+    const isVideo = ALLOWED_VIDEO_MIMES.includes(mimeNormalized) || mimeNormalized.startsWith('video/');
 
-    if (!ALLOWED_AUDIO_MIMES.includes(mimeNormalized)) {
-      throw new Error(
-        `INVALID_AUDIO_FORMAT: MIME type '${file.mimetype}' is not permitted. Strictly audio only: wav, mpeg/mp3, webm, ogg, mp4/aac.`
-      );
-    }
-
-    if (file.size > MAX_AUDIO_FILE_SIZE) {
-      throw new Error(
-        `FILE_TOO_LARGE: Audio file size (${Math.round(file.size / (1024 * 1024))}MB) exceeds maximum allowed limit of 50MB.`
-      );
+    if (isVideo || folder === 'materials' || folder === 'videos') {
+      if (!ALLOWED_MEDIA_MIMES.includes(mimeNormalized)) {
+        throw new Error(
+          `INVALID_MEDIA_FORMAT: MIME type '${file.mimetype}' is not permitted. Supported formats: MP4, WebM, QuickTime, WAV, MP3, OGG, AAC.`
+        );
+      }
+      if (file.size > MAX_MEDIA_FILE_SIZE) {
+        throw new Error(
+          `FILE_TOO_LARGE: Media file size (${Math.round(file.size / (1024 * 1024))}MB) exceeds maximum allowed limit of 150MB.`
+        );
+      }
+    } else {
+      if (!ALLOWED_AUDIO_MIMES.includes(mimeNormalized)) {
+        throw new Error(
+          `INVALID_AUDIO_FORMAT: MIME type '${file.mimetype}' is not permitted. Strictly audio only: wav, mpeg/mp3, webm, ogg, mp4/aac.`
+        );
+      }
+      if (file.size > MAX_AUDIO_FILE_SIZE) {
+        throw new Error(
+          `FILE_TOO_LARGE: Audio file size (${Math.round(file.size / (1024 * 1024))}MB) exceeds maximum allowed limit of 50MB.`
+        );
+      }
     }
 
     const targetFolder = path.join(this.baseDir, folder);

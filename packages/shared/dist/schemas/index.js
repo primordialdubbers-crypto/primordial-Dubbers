@@ -78,15 +78,20 @@ export const createChallengeSchema = z.object({
     script: z.string().trim().min(5, 'Script is required').max(5000),
     difficulty: z.enum(['Beginner', 'Intermediate', 'Advanced', 'Master']).default('Beginner'),
     targetRank: z.enum(['ED', 'C', 'B', 'A', 'S']).default('ED'),
-    referenceMediaUrl: z.string().url().optional().or(z.literal('')),
+    referenceMediaUrl: z.string().optional().or(z.literal('')),
     deadline: z.string().datetime().optional().nullable(),
     isActive: z.boolean().optional().default(true),
     tags: z.array(z.string()).optional().default([]),
+    assignedStudentIds: z.array(z.string()).optional().default([]),
+    isPersonal: z.boolean().optional().default(false),
 });
 export const updateChallengeSchema = createChallengeSchema.partial();
 export const createSubmissionSchema = z.object({
-    challengeId: z.string().min(1, 'Challenge ID is required'),
+    challengeId: z.string().optional().nullable(),
+    customTitle: z.string().trim().max(150).optional(),
+    characterName: z.string().trim().max(100).optional(),
     audioUrl: z.string().min(1, 'Audio URL is required'),
+    videoUrl: z.string().optional(),
     durationSeconds: z.number().positive('Duration must be greater than 0').max(600, 'Audio exceeds maximum 10-minute duration limit'),
     mimeType: z.string().refine((val) => {
         const allowed = ['audio/wav', 'audio/mpeg', 'audio/webm', 'audio/ogg', 'audio/mp4', 'audio/x-wav', 'audio/mp3', 'audio/aac'];

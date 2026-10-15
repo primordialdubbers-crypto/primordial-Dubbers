@@ -22,6 +22,14 @@ import {
   Check,
   Video,
   Sliders,
+  FolderPlus,
+  Upload,
+  Users,
+  Eye,
+  Sparkles,
+  X,
+  CheckSquare,
+  Search,
 } from 'lucide-react';
 
 import {
@@ -31,6 +39,9 @@ import {
   DEDUCTIONS_CATALOG,
   RubricScores,
   TimestampComment,
+  ChallengeRecord,
+  ChallengeDifficulty,
+  RankTier,
 } from '@pdi/shared';
 
 interface QueueItem {
@@ -40,10 +51,12 @@ interface QueueItem {
   studentEmail: string;
   challengeId: string;
   challengeTitle: string;
+  customTitle?: string;
   characterName: string;
   difficulty: string;
   targetRank: string;
   referenceMediaUrl?: string;
+  videoUrl?: string;
   script?: string;
   audioUrl: string;
   durationSeconds: number;
@@ -68,7 +81,7 @@ interface QueueItem {
 
 export const DirectorWorkspace: React.FC = () => {
   const { user, token } = useAuth();
-  const [activeTab, setActiveTab] = useState<'queue' | 'recommendation'>('queue');
+  const [activeTab, setActiveTab] = useState<'queue' | 'recommendation' | 'materials'>('queue');
   const [clearanceActive, setClearanceActive] = useState<boolean>(false);
 
   // Review Queue state
@@ -122,6 +135,199 @@ export const DirectorWorkspace: React.FC = () => {
   const [standaloneCategory, setStandaloneCategory] = useState<string>('review_award');
   const [standaloneReason, setStandaloneReason] = useState<string>('');
 
+  // Material Provision & Assignment State
+  const [materials, setMaterials] = useState<ChallengeRecord[]>([]);
+  const [isLoadingMaterials, setIsLoadingMaterials] = useState<boolean>(false);
+  const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+
+  // Material Form
+  const [matTitle, setMatTitle] = useState<string>('');
+  const [matCharacter, setMatCharacter] = useState<string>('');
+  const [matDescription, setMatDescription] = useState<string>('');
+  const [matScript, setMatScript] = useState<string>('');
+  const [matDifficulty, setMatDifficulty] = useState<ChallengeDifficulty>('Beginner');
+  const [matTargetRank, setMatTargetRank] = useState<RankTier>('ED');
+  const [matDeadline, setMatDeadline] = useState<string>('');
+  const [matTags, setMatTags] = useState<string>('');
+  const [matMediaUrl, setMatMediaUrl] = useState<string>('');
+  const [isUploadingMatMedia, setIsUploadingMatMedia] = useState<boolean>(false);
+  const [isPersonalAssignment, setIsPersonalAssignment] = useState<boolean>(false);
+  const [assignedStudentIds, setAssignedStudentIds] = useState<string[]>([]);
+  const [studentSearchFilter, setStudentSearchFilter] = useState<string>('');
+
+  // Admin Direct Points Award State
+  const [showAdminAwardModal, setShowAdminAwardModal] = useState<boolean>(false);
+  const [adminAwardDelta, setAdminAwardDelta] = useState<number>(50);
+  const [adminAwardCategory, setAdminAwardCategory] = useState<string>('scene_mastery');
+  const [adminAwardReason, setAdminAwardReason] = useState<string>('');
+  const [isAdminAwarding, setIsAdminAwarding] = useState<boolean>(false);
+
+  const fetchMaterials = async () => {
+    setIsLoadingMaterials(true);
+    try {
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/v1/challenges?isActive=all&limit=100', {
+        headers,
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const body = await res.json();
+        setMaterials(body.data?.challenges || []);
+      }
+    } catch (err) {
+      console.warn('Failed to load materials:', err);
+    } finally {
+      setIsLoadingMaterials(false);
+    }
+  };
+
+  const handleUploadMaterialFile = async (file: File) => {
+    setIsUploadingMatMedia(true);
+    try {
+      const formData = new FormData();
+      formData.append('media', file);
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/v1/admin/challenges/upload-media', {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: formData,
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message || 'Media upload failed');
+      setMatMediaUrl(body.data.url);
+      setFeedback({ type: 'success', message: 'Material reference media uploaded successfully!' });
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to upload media file' });
+    } finally {
+      setIsUploadingMatMedia(false);
+    }
+  };
+
+  const handleCreateMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!matTitle.trim() || !matCharacter.trim() || !matScript.trim()) {
+      setFeedback({ type: 'error', message: 'Title, Character Name, and Script are required.' });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const payload = {
+        title: matTitle.trim(),
+        characterName: matCharacter.trim(),
+        description: matDescription.trim() || `Audition clip for ${matCharacter.trim()}`,
+        script: matScript.trim(),
+        difficulty: matDifficulty,
+        targetRank: matTargetRank,
+        referenceMediaUrl: matMediaUrl.trim() || undefined,
+        deadline: matDeadline ? new Date(matDeadline).toISOString() : null,
+        tags: matTags.split(',').map((t) => t.trim()).filter(Boolean),
+        isPersonal: isPersonalAssignment,
+        assignedStudentIds: isPersonalAssignment ? assignedStudentIds : [],
+      };
+
+      const res = await fetch('/api/v1/admin/challenges', {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message || 'Failed to create material');
+
+      setFeedback({
+        type: 'success',
+        message: `Material '${matTitle}' provisioned successfully! ${
+          isPersonalAssignment
+            ? `Assigned to ${assignedStudentIds.length} voice artist(s).`
+            : 'Open to all students.'
+        }`,
+      });
+
+      setShowCreateModal(false);
+      setMatTitle('');
+      setMatCharacter('');
+      setMatDescription('');
+      setMatScript('');
+      setMatMediaUrl('');
+      setIsPersonalAssignment(false);
+      setAssignedStudentIds([]);
+      await fetchMaterials();
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Error creating material' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteMaterial = async (id: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to delete material '${title}'?`)) return;
+    try {
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`/api/v1/admin/challenges/${id}`, {
+        method: 'DELETE',
+        headers,
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setFeedback({ type: 'success', message: `Material '${title}' deleted successfully.` });
+        await fetchMaterials();
+      } else {
+        const body = await res.json();
+        throw new Error(body.message || 'Failed to delete material');
+      }
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Error deleting material' });
+    }
+  };
+
+  const handleDirectAdminAward = async () => {
+    if (!selectedSubmission) return;
+    setIsAdminAwarding(true);
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/v1/admin/points/adjust', {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          studentId: selectedSubmission.studentId,
+          delta: adminAwardDelta,
+          category: adminAwardCategory,
+          reason:
+            adminAwardReason.trim() ||
+            `Direct Take Evaluation: ${selectedSubmission.challengeTitle || 'Audition'} (Score ${liveTotalScore}/100)`,
+        }),
+      });
+
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message || 'Failed to award points');
+
+      setFeedback({
+        type: 'success',
+        message: `Points awarded directly! ${adminAwardDelta > 0 ? '+' : ''}${adminAwardDelta} points credited to ${selectedSubmission.studentName}.`,
+      });
+      setShowAdminAwardModal(false);
+      await fetchQueue();
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to award points' });
+    } finally {
+      setIsAdminAwarding(false);
+    }
+  };
+
   const fetchQueue = async () => {
     setIsLoadingQueue(true);
     try {
@@ -157,6 +363,7 @@ export const DirectorWorkspace: React.FC = () => {
       .catch((err) => console.warn('Director clearance check failed:', err));
 
     fetchQueue();
+    fetchMaterials();
 
     // Fetch artists for student selector in standalone proposal
     fetch('/api/v1/leaderboard')
@@ -468,6 +675,20 @@ export const DirectorWorkspace: React.FC = () => {
               }`}
             >
               Review Queue ({pendingCount} Pending)
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('materials');
+                setSelectedSubmission(null);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                activeTab === 'materials'
+                  ? 'bg-cyber-lime text-slate-950 font-bold shadow-md'
+                  : 'bg-slate-800 text-slate-300 hover:text-white'
+              }`}
+            >
+              <FolderPlus size={13} />
+              Material Provision ({materials.length})
             </button>
             <button
               onClick={() => setActiveTab('recommendation')}
@@ -1110,6 +1331,17 @@ export const DirectorWorkspace: React.FC = () => {
                 <Check size={14} />
                 {isSubmitting ? 'Finalizing...' : 'Finalize & Submit Evaluation'}
               </button>
+
+              {(user?.roles?.includes('admin') || user?.roles?.includes('superadmin')) && (
+                <button
+                  type="button"
+                  onClick={() => setShowAdminAwardModal(true)}
+                  className="px-4 py-2 rounded-lg bg-cyber-lime hover:bg-lime-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-cyber-lime/20 transition-all"
+                >
+                  <Award size={14} />
+                  Direct Award Points (Admin)
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -1375,6 +1607,527 @@ export const DirectorWorkspace: React.FC = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* MATERIALS & ASSIGNMENTS TAB */}
+      {activeTab === 'materials' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Header Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-pdi-border pb-4">
+            <div>
+              <h2 className="text-lg font-bold font-heading text-white flex items-center gap-2">
+                <FolderPlus size={20} className="text-cyber-lime" />
+                Work Materials & Audition Provision Hub
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Upload scripts, reference clips, set target rank, and assign personally to specific voice artists or publish publicly.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={fetchMaterials}
+                disabled={isLoadingMaterials}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pdi-surface border border-pdi-border hover:border-slate-500 text-xs text-slate-300"
+              >
+                <RefreshCw size={13} className={isLoadingMaterials ? 'animate-spin' : ''} />
+                Refresh
+              </button>
+
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyber-lime hover:bg-lime-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyber-lime/20 transition-all"
+              >
+                <Plus size={15} /> Provide New Work Material
+              </button>
+            </div>
+          </div>
+
+          {/* Materials List */}
+          {isLoadingMaterials ? (
+            <div className="p-12 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
+              <RefreshCw className="animate-spin w-4 h-4 text-cyber-lime" />
+              Loading work materials...
+            </div>
+          ) : materials.length === 0 ? (
+            <div className="p-12 text-center text-slate-400 text-xs border border-dashed border-slate-800 rounded-2xl space-y-3">
+              <FolderPlus className="w-10 h-10 text-slate-600 mx-auto" />
+              <h3 className="text-base font-bold text-white font-heading">No Work Materials Provisioned Yet</h3>
+              <p className="text-xs text-slate-400 max-w-md mx-auto">
+                Click "Provide New Work Material" to upload a scene script, reference clip, and assign it to students.
+              </p>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyber-lime text-slate-950 font-bold text-xs"
+              >
+                <Plus size={14} /> Provide First Material
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {materials.map((m) => {
+                const isPersonal = Boolean(m.isPersonal);
+                const assignedCount = m.assignedStudents?.length || m.assignedStudentIds?.length || 0;
+
+                return (
+                  <div
+                    key={m.id}
+                    className="rounded-2xl border border-pdi-border bg-pdi-surface p-5 flex flex-col justify-between space-y-4 shadow-lg hover:border-slate-600 transition-all"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-slate-900 border border-slate-700 text-slate-300">
+                          {m.difficulty} • Tier {m.targetRank}
+                        </span>
+
+                        {isPersonal ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-cyber-lime/10 border border-cyber-lime/40 text-cyber-lime font-bold">
+                            <Users size={11} /> Personal ({assignedCount})
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-sky-950 border border-sky-800 text-sky-300">
+                            Public
+                          </span>
+                        )}
+                      </div>
+
+                      <div>
+                        <h3 className="text-base font-bold font-heading text-white">
+                          {m.title}
+                        </h3>
+                        <div className="text-xs font-mono text-cyber-lime mt-0.5">
+                          Character: {m.characterName}
+                        </div>
+                      </div>
+
+                      {/* Reference Media Preview */}
+                      {m.referenceMediaUrl ? (
+                        <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950 max-h-36 flex items-center justify-center">
+                          {m.referenceMediaUrl.match(/\.(mp4|webm|mov|mkv)/i) || m.referenceMediaUrl.includes('video') ? (
+                            <video
+                              src={m.referenceMediaUrl}
+                              controls
+                              className="w-full max-h-36 object-contain"
+                            />
+                          ) : (
+                            <div className="p-3 w-full">
+                              <audio src={m.referenceMediaUrl} controls className="w-full" />
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="p-2 rounded bg-slate-900/60 text-[11px] text-slate-500 font-mono italic">
+                          No reference video/audio attached
+                        </div>
+                      )}
+
+                      {/* Script Snippet */}
+                      <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-900 text-[11px] text-slate-300 line-clamp-3 italic">
+                        "{m.script}"
+                      </div>
+
+                      {/* Assigned Students List */}
+                      {isPersonal && (
+                        <div className="pt-2 border-t border-slate-800 space-y-1.5">
+                          <span className="text-[10px] font-mono uppercase text-slate-400 block">
+                            Assigned Voice Artists:
+                          </span>
+                          {m.assignedStudents && m.assignedStudents.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                              {m.assignedStudents.map((s) => (
+                                <span
+                                  key={s.id}
+                                  className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-900 border border-slate-700 text-slate-200"
+                                >
+                                  {s.displayName}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-amber-400 font-mono">
+                              No specific students selected
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                      <span className="text-[10px] font-mono text-slate-500">
+                        Created: {new Date(m.createdAt).toLocaleDateString()}
+                      </span>
+                      {(user?.roles?.includes('admin') || user?.roles?.includes('superadmin')) && (
+                        <button
+                          onClick={() => handleDeleteMaterial(m.id, m.title)}
+                          className="text-rose-400 hover:text-rose-300 text-xs flex items-center gap-1 transition-colors"
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* CREATE WORK MATERIAL MODAL */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-950 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl my-8 animate-fadeIn max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="text-lg font-bold font-heading text-white flex items-center gap-2">
+                  <FolderPlus size={18} className="text-cyber-lime" />
+                  Provide Work Material / Audition Scene
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Provision practice scripts, reference media clips, and assign to students.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateMaterial} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 uppercase mb-1">
+                    Material / Scene Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={matTitle}
+                    onChange={(e) => setMatTitle(e.target.value)}
+                    placeholder="e.g. Cyberpunk Noir: Detective Monologue"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyber-lime"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 uppercase mb-1">
+                    Character Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={matCharacter}
+                    onChange={(e) => setMatCharacter(e.target.value)}
+                    placeholder="e.g. Officer Vance"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyber-lime"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-300 uppercase mb-1">
+                  Script Lines / Dialogue *
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={matScript}
+                  onChange={(e) => setMatScript(e.target.value)}
+                  placeholder="Paste the dialogue lines or acting monologue here..."
+                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono focus:outline-none focus:border-cyber-lime"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 uppercase mb-1">
+                    Difficulty Level
+                  </label>
+                  <select
+                    value={matDifficulty}
+                    onChange={(e) => setMatDifficulty(e.target.value as ChallengeDifficulty)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyber-lime"
+                  >
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                    <option value="Master">Master</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 uppercase mb-1">
+                    Target Rank Tier
+                  </label>
+                  <select
+                    value={matTargetRank}
+                    onChange={(e) => setMatTargetRank(e.target.value as RankTier)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyber-lime"
+                  >
+                    <option value="ED">Tier ED (Introductory)</option>
+                    <option value="C">Tier C (Developing)</option>
+                    <option value="B">Tier B (Professional)</option>
+                    <option value="A">Tier A (Elite)</option>
+                    <option value="S">Tier S (Master)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 uppercase mb-1">
+                    Deadline (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={matDeadline}
+                    onChange={(e) => setMatDeadline(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyber-lime"
+                  />
+                </div>
+              </div>
+
+              {/* Reference Media Upload */}
+              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-white uppercase font-heading flex items-center gap-1.5">
+                    <Video size={13} className="text-cyber-lime" /> Reference Scene Media (Video / Audio)
+                  </span>
+                  {matMediaUrl && (
+                    <span className="text-[10px] font-mono text-emerald-400">Media Attached ✓</span>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-mono text-slate-400 mb-1">
+                      Upload Video or Audio Clip (MP4, WebM, WAV, MP3 - up to 150MB):
+                    </label>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime,audio/wav,audio/mpeg,audio/webm,audio/mp3"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadMaterialFile(file);
+                      }}
+                      className="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyber-lime file:text-slate-950 hover:file:bg-lime-400 cursor-pointer"
+                    />
+                    {isUploadingMatMedia && (
+                      <div className="text-[11px] text-cyber-lime font-mono mt-1 flex items-center gap-1">
+                        <RefreshCw size={11} className="animate-spin" /> Uploading media to storage...
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-mono text-slate-400 mb-1">
+                      Or Direct Media URL:
+                    </label>
+                    <input
+                      type="text"
+                      value={matMediaUrl}
+                      onChange={(e) => setMatMediaUrl(e.target.value)}
+                      placeholder="/uploads/materials/... or https://..."
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-cyber-lime font-mono text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Assignment Scope */}
+              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                <span className="text-[11px] font-bold text-white uppercase font-heading block">
+                  Material Assignment Audience
+                </span>
+
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-200">
+                    <input
+                      type="radio"
+                      name="assignmentScope"
+                      checked={!isPersonalAssignment}
+                      onChange={() => setIsPersonalAssignment(false)}
+                      className="text-cyber-lime focus:ring-0"
+                    />
+                    <span>Public to All Voice Artists</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-200">
+                    <input
+                      type="radio"
+                      name="assignmentScope"
+                      checked={isPersonalAssignment}
+                      onChange={() => setIsPersonalAssignment(true)}
+                      className="text-cyber-lime focus:ring-0"
+                    />
+                    <span>Targeted Personal Assignment</span>
+                  </label>
+                </div>
+
+                {/* Student Multi-Select List */}
+                {isPersonalAssignment && (
+                  <div className="space-y-2 pt-2 border-t border-slate-800">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-cyber-lime">
+                        Select students who will personally receive this audition material:
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {assignedStudentIds.length} Selected
+                      </span>
+                    </div>
+
+                    <div className="relative">
+                      <Search size={13} className="absolute left-2.5 top-2.5 text-slate-500" />
+                      <input
+                        type="text"
+                        value={studentSearchFilter}
+                        onChange={(e) => setStudentSearchFilter(e.target.value)}
+                        placeholder="Search student artists by name..."
+                        className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs"
+                      />
+                    </div>
+
+                    <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg border border-slate-800 p-2 bg-slate-950">
+                      {artists
+                        .filter((a) =>
+                          a.displayName.toLowerCase().includes(studentSearchFilter.toLowerCase())
+                        )
+                        .map((a) => {
+                          const isSelected = assignedStudentIds.includes(a.userId);
+                          return (
+                            <label
+                              key={a.userId}
+                              className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
+                                isSelected ? 'bg-cyber-lime/10 border border-cyber-lime/30' : 'hover:bg-slate-900'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setAssignedStudentIds((prev) => [...prev, a.userId]);
+                                    } else {
+                                      setAssignedStudentIds((prev) => prev.filter((id) => id !== a.userId));
+                                    }
+                                  }}
+                                  className="rounded text-cyber-lime focus:ring-0"
+                                />
+                                <span className="font-semibold text-white">{a.displayName}</span>
+                              </div>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-900 text-slate-300">
+                                Tier {a.currentRank}
+                              </span>
+                            </label>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || isUploadingMatMedia}
+                  className="px-6 py-2 rounded-lg bg-cyber-lime hover:bg-lime-400 text-slate-950 font-bold flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Plus size={14} />
+                  {isSubmitting ? 'Publishing Material...' : 'Publish Material'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADMIN DIRECT POINTS AWARD MODAL */}
+      {showAdminAwardModal && selectedSubmission && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-950 border border-cyber-lime/40 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-fadeIn">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+                <Award size={18} className="text-cyber-lime" />
+                Direct Admin Point Award
+              </h3>
+              <button
+                onClick={() => setShowAdminAwardModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Directly credit or adjust points for <strong className="text-white">{selectedSubmission.studentName}</strong> on the spot with transactional ledger verification.
+            </p>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                  Points Delta (+/-)
+                </label>
+                <input
+                  type="number"
+                  value={adminAwardDelta}
+                  onChange={(e) => setAdminAwardDelta(parseInt(e.target.value || '0', 10))}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                  Category
+                </label>
+                <input
+                  type="text"
+                  value={adminAwardCategory}
+                  onChange={(e) => setAdminAwardCategory(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                  Reason / Notes
+                </label>
+                <textarea
+                  rows={2}
+                  value={adminAwardReason}
+                  onChange={(e) => setAdminAwardReason(e.target.value)}
+                  placeholder={`Audition Take Award: ${selectedSubmission.challengeTitle || 'Monologue'}`}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAdminAwardModal(false)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isAdminAwarding}
+                  onClick={handleDirectAdminAward}
+                  className="px-4 py-1.5 rounded-lg bg-cyber-lime hover:bg-lime-400 text-slate-950 font-bold disabled:opacity-50"
+                >
+                  {isAdminAwarding ? 'Awarding...' : 'Award Points Now'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

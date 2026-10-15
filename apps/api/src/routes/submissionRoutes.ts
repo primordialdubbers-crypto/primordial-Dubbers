@@ -2,22 +2,23 @@ import { Router } from 'express';
 import multer from 'multer';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { SubmissionController } from '../controllers/submissionController.js';
-import { ALLOWED_AUDIO_MIMES, MAX_AUDIO_FILE_SIZE } from '../services/storage/storageAdapter.js';
+import { ALLOWED_MEDIA_MIMES, MAX_MEDIA_FILE_SIZE } from '../services/storage/storageAdapter.js';
 
 const router = Router();
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: MAX_AUDIO_FILE_SIZE,
+    fileSize: MAX_MEDIA_FILE_SIZE,
   },
   fileFilter: (req, file, cb) => {
-    if (ALLOWED_AUDIO_MIMES.includes(file.mimetype.toLowerCase())) {
+    const mime = file.mimetype.toLowerCase();
+    if (ALLOWED_MEDIA_MIMES.includes(mime)) {
       cb(null, true);
     } else {
       cb(
         new Error(
-          `INVALID_AUDIO_FORMAT: MIME type '${file.mimetype}' is not allowed. Supported formats: WAV, MP3, WebM, OGG, MP4/AAC`
+          `INVALID_MEDIA_FORMAT: MIME type '${file.mimetype}' is not allowed. Supported formats: MP4, WebM, QuickTime, WAV, MP3, OGG, AAC`
         )
       );
     }

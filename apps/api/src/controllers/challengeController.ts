@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { createChallengeSchema, updateChallengeSchema } from '@pdi/shared';
 import { ChallengeService } from '../services/challengeService.js';
+import { storageService } from '../services/storage/storageAdapter.js';
 
 export class ChallengeController {
   /**
@@ -10,14 +11,19 @@ export class ChallengeController {
   static async listChallenges(req: Request, res: Response, next: NextFunction) {
     try {
       const { difficulty, targetRank, isActive, search, page, limit } = req.query;
-      const result = await ChallengeService.listChallenges({
-        difficulty: difficulty as string,
-        targetRank: targetRank as string,
-        isActive: isActive !== undefined ? (isActive as string) : 'true',
-        search: search as string,
-        page: page as string,
-        limit: limit as string,
-      });
+      const requestingUser = (req as any).user;
+
+      const result = await ChallengeService.listChallenges(
+        {
+          difficulty: difficulty as string,
+          targetRank: targetRank as string,
+          isActive: isActive !== undefined ? (isActive as string) : 'true',
+          search: search as string,
+          page: page as string,
+          limit: limit as string,
+        },
+        requestingUser
+      );
 
       res.status(200).json({
         success: true,
@@ -45,6 +51,23 @@ export class ChallengeController {
         });
       }
 
+      const assignedStudents = Array.isArray(challenge.assignedStudentIds)
+        ? (challenge.assignedStudentIds as any[]).map((s: any) => ({
+            id: s._id ? s._id.toString() : s.toString(),
+            displayName: s.displayName || 'Student Artist',
+            email: s.email || '',
+          }))
+        : [];
+
+      const assignedIds = Array.isArray(challenge.assignedStudentIds)
+        ? (challenge.assignedStudentIds as any[]).map((s: any) =>
+            s._id ? s._id.toString() : s.toString()
+          )
+        : [];
+
+      const userId = (req as any).user?.id;
+      const isAssignedToMe = userId ? assignedIds.includes(userId) : false;
+
       res.status(200).json({
         success: true,
         data: {
@@ -60,12 +83,64 @@ export class ChallengeController {
             deadline: challenge.deadline ? challenge.deadline.toISOString() : null,
             isActive: challenge.isActive,
             tags: challenge.tags,
+            assignedStudentIds: assignedIds,
+            assignedStudents,
+            isPersonal: Boolean(challenge.isPersonal),
+            isAssignedToMe,
+            createdBy: (challenge.createdBy as any)?._id?.toString() || challenge.createdBy.toString(),
+            creatorName: (challenge.createdBy as any)?.displayName || 'Staff Director',
             createdAt: challenge.createdAt.toISOString(),
             updatedAt: challenge.updatedAt.toISOString(),
           },
         },
       });
     } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/v1/admin/challenges/upload-media
+   * Upload video or audio reference material (up to 150MB)
+   */
+  static async uploadMaterialMedia(req: Request, res: Response, next: NextFunction) {
+    try {
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No media file attached in request',
+          error: { code: 'FILE_MISSING' },
+        });
+      }
+
+      const result = await storageService.uploadFile(
+        {
+          buffer: file.buffer,
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+        },
+        'materials'
+      );
+
+      res.status(201).json({
+        success: true,
+        data: result,
+        message: 'Material media uploaded successfully',
+      });
+    } catch (error: any) {
+      if (
+        error?.message?.includes('INVALID_MEDIA_FORMAT') ||
+        error?.message?.includes('INVALID_AUDIO_FORMAT') ||
+        error?.message?.includes('FILE_TOO_LARGE')
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+          error: { code: 'MEDIA_VALIDATION_ERROR' },
+        });
+      }
       next(error);
     }
   }
@@ -107,6 +182,8 @@ export class ChallengeController {
             deadline: challenge.deadline ? challenge.deadline.toISOString() : null,
             isActive: challenge.isActive,
             tags: challenge.tags,
+            assignedStudentIds: (challenge.assignedStudentIds || []).map((id: any) => id.toString()),
+            isPersonal: Boolean(challenge.isPersonal),
             createdAt: challenge.createdAt.toISOString(),
           },
         },

@@ -77,8 +77,11 @@ export class SubmissionController {
         : 0;
 
       const parseResult = createSubmissionSchema.safeParse({
-        challengeId: req.body.challengeId,
+        challengeId: req.body.challengeId ? req.body.challengeId : null,
+        customTitle: req.body.customTitle,
+        characterName: req.body.characterName,
         audioUrl,
+        videoUrl: req.body.videoUrl,
         durationSeconds,
         mimeType,
         submissionType: req.body.submissionType || 'uploaded',
@@ -107,9 +110,12 @@ export class SubmissionController {
         data: {
           submission: {
             id: submission._id.toString(),
-            challengeId: submission.challengeId.toString(),
+            challengeId: submission.challengeId ? submission.challengeId.toString() : null,
+            customTitle: submission.customTitle,
+            characterName: submission.characterName,
             studentId: submission.studentId.toString(),
             audioUrl: submission.audioUrl,
+            videoUrl: submission.videoUrl,
             durationSeconds: submission.durationSeconds,
             mimeType: submission.mimeType,
             submissionType: submission.submissionType,

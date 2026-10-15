@@ -4,8 +4,11 @@ import { SubmissionStatus, SubmissionType } from '@pdi/shared';
 export interface ISubmission extends Document {
   _id: mongoose.Types.ObjectId;
   studentId: mongoose.Types.ObjectId;
-  challengeId: mongoose.Types.ObjectId;
+  challengeId?: mongoose.Types.ObjectId | null;
+  customTitle?: string;
+  characterName?: string;
   audioUrl: string;
+  videoUrl?: string;
   durationSeconds: number;
   mimeType: string;
   submissionType: SubmissionType;
@@ -27,12 +30,30 @@ const submissionSchema = new Schema<ISubmission>(
     challengeId: {
       type: Schema.Types.ObjectId,
       ref: 'Challenge',
-      required: true,
+      required: false,
+      default: null,
       index: true,
+    },
+    customTitle: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 150,
+    },
+    characterName: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 100,
     },
     audioUrl: {
       type: String,
       required: true,
+      trim: true,
+    },
+    videoUrl: {
+      type: String,
+      default: '',
       trim: true,
     },
     durationSeconds: {
@@ -54,8 +75,8 @@ const submissionSchema = new Schema<ISubmission>(
     syncOffsetMs: {
       type: Number,
       default: 0,
-      min: -500,
-      max: 500,
+      min: -2000,
+      max: 2000,
     },
     status: {
       type: String,

@@ -10,23 +10,43 @@ export class SubmissionService {
     input: CreateSubmissionInput,
     studentId: string
   ): Promise<ISubmission> {
-    if (!mongoose.Types.ObjectId.isValid(input.challengeId)) {
-      throw new Error('INVALID_CHALLENGE_ID: Challenge identifier is invalid');
-    }
+    let challengeIdObj: mongoose.Types.ObjectId | null = null;
+    let customTitle = input.customTitle || '';
+    let characterName = input.characterName || '';
+    let videoUrl = input.videoUrl || '';
 
-    const challenge = await Challenge.findById(input.challengeId);
-    if (!challenge) {
-      throw new Error('CHALLENGE_NOT_FOUND: Challenge does not exist');
-    }
+    if (input.challengeId && input.challengeId.trim()) {
+      if (!mongoose.Types.ObjectId.isValid(input.challengeId)) {
+        throw new Error('INVALID_CHALLENGE_ID: Challenge identifier is invalid');
+      }
 
-    if (!challenge.isActive) {
-      throw new Error('CHALLENGE_INACTIVE: This audition challenge is no longer accepting submissions');
+      const challenge = await Challenge.findById(input.challengeId);
+      if (!challenge) {
+        throw new Error('CHALLENGE_NOT_FOUND: Challenge does not exist');
+      }
+
+      if (!challenge.isActive) {
+        throw new Error('CHALLENGE_INACTIVE: This audition challenge is no longer accepting submissions');
+      }
+
+      challengeIdObj = challenge._id;
+      customTitle = challenge.title;
+      characterName = challenge.characterName;
+      if (!videoUrl && challenge.referenceMediaUrl) {
+        videoUrl = challenge.referenceMediaUrl;
+      }
+    } else {
+      customTitle = customTitle || 'Custom Dubbing Take';
+      characterName = characterName || 'Original Voice';
     }
 
     const submission = new Submission({
       studentId: new mongoose.Types.ObjectId(studentId),
-      challengeId: new mongoose.Types.ObjectId(input.challengeId),
+      challengeId: challengeIdObj,
+      customTitle,
+      characterName,
       audioUrl: input.audioUrl,
+      videoUrl,
       durationSeconds: input.durationSeconds,
       mimeType: input.mimeType,
       submissionType: input.submissionType || 'uploaded',
@@ -52,12 +72,14 @@ export class SubmissionService {
       return {
         id: s._id.toString(),
         studentId: s.studentId.toString(),
-        challengeId: challenge?._id ? challenge._id.toString() : (challenge ? challenge.toString() : ''),
-        challengeTitle: challenge?.title || 'Audition Challenge',
-        characterName: challenge?.characterName || 'Character',
+        challengeId: challenge?._id ? challenge._id.toString() : (s.challengeId ? s.challengeId.toString() : null),
+        challengeTitle: challenge?.title || s.customTitle || 'Custom Dubbing Clip',
+        customTitle: s.customTitle,
+        characterName: challenge?.characterName || s.characterName || 'Voice',
         difficulty: challenge?.difficulty || 'Beginner',
         targetRank: challenge?.targetRank || 'ED',
         audioUrl: s.audioUrl,
+        videoUrl: s.videoUrl || challenge?.referenceMediaUrl || '',
         durationSeconds: s.durationSeconds,
         mimeType: s.mimeType,
         submissionType: s.submissionType,
@@ -90,8 +112,11 @@ export class SubmissionService {
         studentId: student?._id ? student._id.toString() : s.studentId.toString(),
         studentName: student?.displayName || 'Unknown Student',
         studentEmail: student?.email || '',
-        challengeId: s.challengeId.toString(),
+        challengeId: s.challengeId ? s.challengeId.toString() : null,
+        customTitle: s.customTitle,
+        characterName: s.characterName,
         audioUrl: s.audioUrl,
+        videoUrl: s.videoUrl || '',
         durationSeconds: s.durationSeconds,
         mimeType: s.mimeType,
         submissionType: s.submissionType,

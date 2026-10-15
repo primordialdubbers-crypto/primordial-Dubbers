@@ -117,6 +117,12 @@ export interface AppealRecord {
     updatedAt: string;
 }
 export type ChallengeDifficulty = 'Beginner' | 'Intermediate' | 'Advanced' | 'Master';
+export interface AssignedStudentInfo {
+    id: string;
+    displayName: string;
+    email?: string;
+    currentRank?: RankTier;
+}
 export interface ChallengeRecord {
     id: string;
     title: string;
@@ -129,7 +135,12 @@ export interface ChallengeRecord {
     deadline?: string | null;
     isActive: boolean;
     tags: string[];
+    assignedStudentIds?: string[];
+    assignedStudents?: AssignedStudentInfo[];
+    isPersonal?: boolean;
+    isAssignedToMe?: boolean;
     createdBy: string;
+    creatorName?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -139,12 +150,14 @@ export interface SubmissionRecord {
     id: string;
     studentId: string;
     studentName?: string;
-    challengeId: string;
+    challengeId?: string | null;
     challengeTitle?: string;
+    customTitle?: string;
     characterName?: string;
     difficulty?: ChallengeDifficulty;
     targetRank?: RankTier;
     audioUrl: string;
+    videoUrl?: string;
     durationSeconds: number;
     mimeType: string;
     submissionType: SubmissionType;

@@ -141,6 +141,8 @@ export declare const createChallengeSchema: z.ZodObject<{
     deadline: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     isActive: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
     tags: z.ZodDefault<z.ZodOptional<z.ZodArray<z.ZodString, "many">>>;
+    assignedStudentIds: z.ZodDefault<z.ZodOptional<z.ZodArray<z.ZodString, "many">>>;
+    isPersonal: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
 }, "strip", z.ZodTypeAny, {
     title: string;
     description: string;
@@ -150,6 +152,8 @@ export declare const createChallengeSchema: z.ZodObject<{
     targetRank: "ED" | "C" | "B" | "A" | "S";
     isActive: boolean;
     tags: string[];
+    assignedStudentIds: string[];
+    isPersonal: boolean;
     referenceMediaUrl?: string | undefined;
     deadline?: string | null | undefined;
 }, {
@@ -163,6 +167,8 @@ export declare const createChallengeSchema: z.ZodObject<{
     deadline?: string | null | undefined;
     isActive?: boolean | undefined;
     tags?: string[] | undefined;
+    assignedStudentIds?: string[] | undefined;
+    isPersonal?: boolean | undefined;
 }>;
 export declare const updateChallengeSchema: z.ZodObject<{
     title: z.ZodOptional<z.ZodString>;
@@ -175,6 +181,8 @@ export declare const updateChallengeSchema: z.ZodObject<{
     deadline: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
     isActive: z.ZodOptional<z.ZodDefault<z.ZodOptional<z.ZodBoolean>>>;
     tags: z.ZodOptional<z.ZodDefault<z.ZodOptional<z.ZodArray<z.ZodString, "many">>>>;
+    assignedStudentIds: z.ZodOptional<z.ZodDefault<z.ZodOptional<z.ZodArray<z.ZodString, "many">>>>;
+    isPersonal: z.ZodOptional<z.ZodDefault<z.ZodOptional<z.ZodBoolean>>>;
 }, "strip", z.ZodTypeAny, {
     title?: string | undefined;
     description?: string | undefined;
@@ -186,6 +194,8 @@ export declare const updateChallengeSchema: z.ZodObject<{
     deadline?: string | null | undefined;
     isActive?: boolean | undefined;
     tags?: string[] | undefined;
+    assignedStudentIds?: string[] | undefined;
+    isPersonal?: boolean | undefined;
 }, {
     title?: string | undefined;
     description?: string | undefined;
@@ -197,28 +207,39 @@ export declare const updateChallengeSchema: z.ZodObject<{
     deadline?: string | null | undefined;
     isActive?: boolean | undefined;
     tags?: string[] | undefined;
+    assignedStudentIds?: string[] | undefined;
+    isPersonal?: boolean | undefined;
 }>;
 export declare const createSubmissionSchema: z.ZodObject<{
-    challengeId: z.ZodString;
+    challengeId: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    customTitle: z.ZodOptional<z.ZodString>;
+    characterName: z.ZodOptional<z.ZodString>;
     audioUrl: z.ZodString;
+    videoUrl: z.ZodOptional<z.ZodString>;
     durationSeconds: z.ZodNumber;
     mimeType: z.ZodEffects<z.ZodString, string, string>;
     submissionType: z.ZodDefault<z.ZodEnum<["recorded", "uploaded"]>>;
     syncOffsetMs: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
     notes: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    challengeId: string;
     audioUrl: string;
     durationSeconds: number;
     mimeType: string;
     submissionType: "recorded" | "uploaded";
     syncOffsetMs: number;
+    characterName?: string | undefined;
+    challengeId?: string | null | undefined;
+    customTitle?: string | undefined;
+    videoUrl?: string | undefined;
     notes?: string | undefined;
 }, {
-    challengeId: string;
     audioUrl: string;
     durationSeconds: number;
     mimeType: string;
+    characterName?: string | undefined;
+    challengeId?: string | null | undefined;
+    customTitle?: string | undefined;
+    videoUrl?: string | undefined;
     submissionType?: "recorded" | "uploaded" | undefined;
     syncOffsetMs?: number | undefined;
     notes?: string | undefined;

@@ -48,7 +48,10 @@ export const ChallengesPage: React.FC = () => {
       if (rankFilter !== 'all') url += `&targetRank=${encodeURIComponent(rankFilter)}`;
       if (searchQuery.trim()) url += `&search=${encodeURIComponent(searchQuery.trim())}`;
 
-      const res = await fetch(url);
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(url, { headers, credentials: 'include' });
       if (res.ok) {
         const body = await res.json();
         setChallenges(body.data?.challenges || []);
@@ -62,7 +65,7 @@ export const ChallengesPage: React.FC = () => {
 
   useEffect(() => {
     fetchChallenges();
-  }, [difficultyFilter, rankFilter]);
+  }, [difficultyFilter, rankFilter, token]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -284,9 +287,21 @@ export const ChallengesPage: React.FC = () => {
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">
-                    {c.difficulty}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">
+                      {c.difficulty}
+                    </span>
+                    {c.isAssignedToMe && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyber-lime/20 border border-cyber-lime text-cyber-lime animate-pulse">
+                        <Sparkles size={11} /> Assigned to You
+                      </span>
+                    )}
+                    {c.isPersonal && !c.isAssignedToMe && (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-950/80 border border-purple-700 text-purple-300">
+                        Targeted
+                      </span>
+                    )}
+                  </div>
                   <RankBadge rank={c.targetRank} size="sm" />
                 </div>
 

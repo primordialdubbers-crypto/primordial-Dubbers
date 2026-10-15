@@ -24,6 +24,7 @@ export function errorHandler(
   if (
     err.name === 'MulterError' ||
     err.message?.includes('INVALID_AUDIO_FORMAT') ||
+    err.message?.includes('INVALID_MEDIA_FORMAT') ||
     err.message?.includes('FILE_TOO_LARGE')
   ) {
     res.status(400).json({
