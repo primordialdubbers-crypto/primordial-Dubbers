@@ -59,3 +59,28 @@
    - Casting Director and Admin roles require invitation or administrative promotion by an existing Admin / Superadmin.
 4. **Media Storage**:
    - Local development and test environments use local asset streaming or mock S3 adapter; production uses S3/Cloud Storage presigned URLs with access control. No audio files are stored in MongoDB.
+
+---
+
+## 4. Staff Ranking System Partition
+1. **Separation from Students**:
+   - Academy Staff (Casting Directors, Lead Executive Directors, Administrators) have distinct merit rank progression (`STAFF_RANK_TIERS`: Junior Reviewer, Evaluator, Casting Director, Senior Director, Lead Executive Director).
+   - Staff profiles are partitioned with `profileType: 'staff'` and excluded from public student leaderboards and talent casting boards to prevent mix-ups.
+2. **Staff Role-Gated Leaderboard**:
+   - Access to `/api/v1/leaderboard?type=staff` is restricted exclusively to authenticated staff/directors/admins (403 forbidden for students and unauthenticated visitors).
+3. **Admin Direct Points Console for Staff**:
+   - Administrators can award points directly to staff members for evaluation, casting, QC, and mentorship via dedicated staff classification presets.
+
+---
+
+## 5. Concurrent Session Limit & Authentication Security
+1. **2 Active Sessions Cap**:
+   - Single user accounts are capped at a maximum of 2 concurrent device/browser sessions to prevent credential sharing and unauthorized multi-device access.
+   - 3rd login attempts return HTTP `429 Too Many Requests` (`ACTIVE_SESSION_LIMIT_EXCEEDED`).
+2. **User-Empowered Eviction**:
+   - If limit is reached, users can choose "Log Out Other Devices & Sign In Here" (`forceLogoutOthers: true`), which invalidates previous sessions immediately.
+3. **Session Revocation on Logout**:
+   - Explicit `/logout` removes the caller's specific `sessionId` from the active sessions array, freeing up the device slot for subsequent logins.
+4. **Brute Force Protection**:
+   - Dedicated rate limiter on `/api/v1/auth/login` restricts requests to 25 attempts per 15 minutes per IP.
+
