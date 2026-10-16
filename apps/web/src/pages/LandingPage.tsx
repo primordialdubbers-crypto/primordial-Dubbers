@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { RankBadge } from '../components/RankBadge';
 import { RANK_TIERS, AWARDS_CATALOG } from '@pdi/shared';
 import { 
@@ -8,10 +9,20 @@ import {
   Award, 
   ShieldCheck, 
   Sparkles, 
-  ChevronRight 
+  ChevronRight,
+  User,
+  Zap
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
+  const { user, profile, activeRole } = useAuth();
+
+  const getDashboardPath = () => {
+    if (activeRole === 'admin') return '/admin';
+    if (activeRole === 'director') return '/director';
+    return '/student';
+  };
+
   return (
     <div className="flex flex-col gap-16 py-8">
       {/* Hero Section */}
@@ -38,25 +49,70 @@ export const LandingPage: React.FC = () => {
           EARN YOUR RANK. <span className="text-cyber-lime">MASTER YOUR VOICE.</span>
         </p>
 
-        <p className="max-w-2xl mx-auto text-slate-300 text-sm md:text-base leading-relaxed mb-8">
-          The premier platform for voice actors and dubbing artists. Dub professional scenes, submit
-          browser-recorded takes, receive 100-point rubric critiques from casting directors, and rise through the official PDI rank tiers.
-        </p>
+        {user ? (
+          <div className="max-w-lg mx-auto mb-8 p-4 rounded-xl bg-slate-900/80 border border-slate-700/80 shadow-lg flex items-center justify-between">
+            <div className="flex items-center gap-3 text-left">
+              <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-cyber-lime uppercase text-sm">
+                {user.displayName.charAt(0)}
+              </div>
+              <div>
+                <span className="text-xs text-slate-400 block">Logged In Artist</span>
+                <span className="text-sm font-bold text-white">{user.displayName}</span>
+              </div>
+            </div>
+
+            {profile && (
+              <div className="flex items-center gap-2">
+                <RankBadge rank={profile.currentRank} size="sm" />
+                <span className="text-xs font-mono font-bold text-cyber-lime flex items-center gap-1">
+                  <Zap size={13} /> {profile.rankPoints.toLocaleString()} PTS
+                </span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="max-w-2xl mx-auto text-slate-300 text-sm md:text-base leading-relaxed mb-8">
+            The premier platform for voice actors and dubbing artists. Dub professional scenes, submit
+            browser-recorded takes, receive 100-point rubric critiques from casting directors, and rise through the official PDI rank tiers.
+          </p>
+        )}
 
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link
-            to="/register"
-            className="px-6 py-3 rounded-lg bg-cyber-lime text-black font-heading font-bold text-base hover:bg-lime-400 shadow-lg shadow-cyber-lime/20 flex items-center gap-2 transition-all hover:scale-105"
-          >
-            <span>JOIN THE ACADEMY</span>
-            <ChevronRight className="w-4 h-4" />
-          </Link>
-          <Link
-            to="/rules"
-            className="px-6 py-3 rounded-lg border border-slate-700 bg-pdi-surface hover:bg-slate-800 text-slate-200 font-heading font-semibold text-base transition-colors"
-          >
-            EXPLORE RANK TIERS & RULES
-          </Link>
+          {user ? (
+            <>
+              <Link
+                to="/student/studio"
+                className="px-6 py-3 rounded-lg bg-cyber-lime text-black font-heading font-bold text-base hover:bg-lime-400 shadow-lg shadow-cyber-lime/20 flex items-center gap-2 transition-all hover:scale-105"
+              >
+                <Mic2 className="w-5 h-5" />
+                <span>ENTER DUBBING STUDIO</span>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to={getDashboardPath()}
+                className="px-6 py-3 rounded-lg border border-slate-700 bg-pdi-surface hover:bg-slate-800 text-slate-200 font-heading font-semibold text-base transition-colors flex items-center gap-2"
+              >
+                <User className="w-4 h-4" />
+                <span>GO TO MY DASHBOARD</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/register"
+                className="px-6 py-3 rounded-lg bg-cyber-lime text-black font-heading font-bold text-base hover:bg-lime-400 shadow-lg shadow-cyber-lime/20 flex items-center gap-2 transition-all hover:scale-105"
+              >
+                <span>JOIN THE ACADEMY</span>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/rules"
+                className="px-6 py-3 rounded-lg border border-slate-700 bg-pdi-surface hover:bg-slate-800 text-slate-200 font-heading font-semibold text-base transition-colors"
+              >
+                EXPLORE RANK TIERS & RULES
+              </Link>
+            </>
+          )}
         </div>
       </section>
 

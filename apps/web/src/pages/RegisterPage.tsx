@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Role } from '@pdi/shared';
 
 export const RegisterPage: React.FC = () => {
-  const { register } = useAuth();
+  const { register, user, activeRole } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      if (activeRole === 'admin') navigate('/admin', { replace: true });
+      else if (activeRole === 'director') navigate('/director', { replace: true });
+      else navigate('/student', { replace: true });
+    }
+  }, [user, activeRole, navigate]);
 
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');

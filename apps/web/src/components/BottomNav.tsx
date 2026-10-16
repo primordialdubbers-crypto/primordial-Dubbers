@@ -12,7 +12,7 @@ import {
   ShieldCheck, 
   Trophy, 
   BookOpen, 
-  LogIn, 
+  User, 
   CheckSquare 
 } from 'lucide-react';
 
@@ -34,7 +34,7 @@ export const BottomNav: React.FC = () => {
       { label: 'Auditions', path: '/student/auditions', icon: Sparkles },
       { label: 'Studio', path: '/student/studio', icon: Mic2, isHero: true },
       { label: 'My Takes', path: '/student/submissions', icon: FileCheck2 },
-      { label: 'Rank & Bio', path: '/student/profile', icon: Award },
+      { label: 'Profile', path: '/student/profile', icon: User },
     ];
 
     return (
@@ -175,10 +175,10 @@ export const BottomNav: React.FC = () => {
   if (user && activeRole === 'admin') {
     const tabs = [
       { label: 'Admin Hub', path: '/admin', icon: ShieldCheck },
-      { label: 'Approvals', path: '/admin/approvals', icon: CheckSquare },
+      { label: 'Users', path: '/admin/users', icon: Users },
       { label: 'Studio', path: '/student/studio', icon: Mic2, isHero: true },
-      { label: 'Review Queue', path: '/director', icon: ClipboardList },
-      { label: 'Auditions', path: '/challenges', icon: Sparkles },
+      { label: 'Approvals', path: '/admin/approvals', icon: CheckSquare },
+      { label: 'Profile', path: '/student/profile', icon: User },
     ];
 
     return (
@@ -249,7 +249,7 @@ export const BottomNav: React.FC = () => {
     { label: 'Auditions', path: '/challenges', icon: Sparkles },
     { label: 'Leaderboard', path: '/leaderboard', icon: Trophy },
     { label: 'Rank Rules', path: '/rules', icon: BookOpen },
-    { label: 'Sign In', path: '/login', icon: LogIn },
+    { label: 'Profile', path: '/login', icon: User },
   ];
 
   return (

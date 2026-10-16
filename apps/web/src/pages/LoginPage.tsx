@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { AlertCircle, CheckCircle2, Eye, EyeOff, KeyRound, X } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, user, activeRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (user) {
+      if (activeRole === 'admin') navigate('/admin', { replace: true });
+      else if (activeRole === 'director') navigate('/director', { replace: true });
+      else navigate('/student', { replace: true });
+    }
+  }, [user, activeRole, navigate]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
