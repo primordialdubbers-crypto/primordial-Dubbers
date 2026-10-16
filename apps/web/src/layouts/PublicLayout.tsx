@@ -1,15 +1,16 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
+import { BottomNav } from '../components/BottomNav';
 
 export const PublicLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-pdi-bg text-slate-100">
       <Navbar />
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col pb-28">
         <Outlet />
       </main>
-      <footer className="border-t border-pdi-border/60 py-8 px-4 bg-slate-950/70 text-center text-xs text-slate-500 flex flex-col items-center gap-3">
+      <footer className="border-t border-pdi-border/60 py-8 px-4 pb-28 bg-slate-950/70 text-center text-xs text-slate-500 flex flex-col items-center gap-3">
         <img
           src="/pdi-logo.jpg"
           alt="Primordial Dubbers India Logo"
@@ -22,6 +23,7 @@ export const PublicLayout: React.FC = () => {
           <p>© 2026 PDI Voice Artist Ranking Platform. Server-authoritative points & audited rank ledger.</p>
         </div>
       </footer>
+      <BottomNav />
     </div>
   );
 };
