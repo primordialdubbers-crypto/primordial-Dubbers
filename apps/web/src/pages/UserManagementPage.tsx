@@ -192,7 +192,7 @@ export const UserManagementPage: React.FC = () => {
   };
 
   const isProtectedRootAdmin = (email: string) => {
-    const protectedList = ['admin@pdi.academy', 'primordialdubbers@gmail.com'];
+    const protectedList = ['primordialdubbers@gmail.com'];
     return protectedList.includes(email.toLowerCase().trim());
   };
 

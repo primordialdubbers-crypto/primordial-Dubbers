@@ -66,14 +66,11 @@ Whenever the backend API starts (`npm run dev:api`), it automatically runs an `e
 - **Dynamic Authentication**: All user and administrator logins authenticate dynamically against MongoDB via `POST /api/v1/auth/login`.
 
 ### Default Credentials:
-- **Admin Console**: `admin@pdi.academy` / `Admin@123456` *(Role: admin, superadmin)*
-- **Casting Director**: `director@pdi.academy` / `DirectorPass123!` *(Role: director)*
-- **Student (S-Rank)**: `aarav@pdi.academy` / `StudentPass123!` *(Role: student)*
-- **Student (ED-Rank)**: `rohan@pdi.academy` / `StudentPass123!` *(Role: student)*
+- **Admin Console**: `primordialdubbers@gmail.com` / `Admin@123456` *(Role: admin, superadmin)*
 
 To customize default admin credentials, configure environment variables in `.env`:
 ```bash
-ADMIN_DEFAULT_EMAIL=admin@pdi.academy
+ADMIN_DEFAULT_EMAIL=primordialdubbers@gmail.com
 ADMIN_DEFAULT_PASSWORD=Admin@123456
 ADMIN_INVITE_TOKEN=pdi_admin_invite_secret_dev
 ```

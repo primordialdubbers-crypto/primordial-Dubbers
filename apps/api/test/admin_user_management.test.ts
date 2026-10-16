@@ -163,7 +163,7 @@ describe('Phase 8: Admin User Management, Search & Deletion API', () => {
   it('prevents deletion of root system administrator accounts', async () => {
     // Create a mock system root admin
     const rootAdmin = await User.create({
-      email: 'admin@pdi.academy',
+      email: 'primordialdubbers@gmail.com',
       displayName: 'Root Administrator',
       passwordHash: 'hashed',
       roles: ['admin', 'superadmin'],

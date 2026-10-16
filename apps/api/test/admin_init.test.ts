@@ -46,7 +46,7 @@ describe('Admin Initialization Service (ensureAdminUser)', () => {
     // Verify corresponding artistProfiles record in MongoDB
     const adminProfile = await ArtistProfile.findOne({ userId: adminUser!._id });
     expect(adminProfile).not.toBeNull();
-    expect(adminProfile?.displayName).toBe('PDI Senior Administrator');
+    expect(adminProfile?.displayName).toBe('Primordial Dubbers Admin');
     expect(adminProfile?.currentRank).toBe('S');
   });
 

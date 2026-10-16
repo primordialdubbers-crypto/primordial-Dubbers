@@ -118,7 +118,7 @@ export const LeaderboardPage: React.FC = () => {
           <div className="p-12 text-center text-slate-400 text-xs">
             <p className="font-semibold text-slate-300">No voice artists found matching criteria.</p>
             <p className="text-[11px] text-slate-500 mt-1">
-              Ensure demo data is seeded (`npm run seed`) or adjust search filters.
+              No registered voice artists have opted into the public leaderboard yet or match your filters.
             </p>
           </div>
         ) : (

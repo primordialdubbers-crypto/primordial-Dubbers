@@ -128,7 +128,6 @@ export class AdminUserController {
 
       // Guard: Protected system root admin accounts
       const protectedEmails = [
-        'admin@pdi.academy',
         'primordialdubbers@gmail.com',
         (config.adminDefaultEmail || '').toLowerCase().trim(),
       ].filter(Boolean);

@@ -9,7 +9,7 @@ export const config = {
   cookieSecret: process.env.COOKIE_SECRET || 'dev_cookie_secret_must_change_in_production',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   adminInviteToken: process.env.ADMIN_INVITE_TOKEN || 'pdi_admin_invite_secret_dev',
-  adminDefaultEmail: process.env.ADMIN_DEFAULT_EMAIL || 'admin@pdi.academy',
+  adminDefaultEmail: process.env.ADMIN_DEFAULT_EMAIL || 'primordialdubbers@gmail.com',
   adminDefaultPassword: process.env.ADMIN_DEFAULT_PASSWORD || 'Admin@123456',
   isProd: process.env.NODE_ENV === 'production',
 };
