@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   ShieldCheck,
@@ -321,14 +322,20 @@ export const AdminOverview: React.FC = () => {
 
       {/* Operational Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="rounded-xl border border-lime-sprout/30 bg-fresh-canopy/30 p-5">
+        <Link
+          to="/admin/users"
+          className="rounded-xl border border-lime-sprout/30 bg-fresh-canopy/30 p-5 hover:border-lime-sprout transition-all group shadow-md"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase text-slate-300">Registered Artists</span>
-            <Users className="w-4 h-4 text-lime-sprout" />
+            <span className="text-xs font-mono uppercase text-slate-300">User Directory</span>
+            <Users className="w-4 h-4 text-lime-sprout group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-3xl font-extrabold font-heading text-lime-sprout mt-2">Active</div>
-          <span className="text-[11px] text-slate-400 mt-1 block">Live MongoDB database connected</span>
-        </div>
+          <div className="text-2xl font-extrabold font-heading text-lime-sprout mt-2 flex items-center justify-between">
+            <span>Manage Users</span>
+            <span className="text-xs font-normal underline">Open &rarr;</span>
+          </div>
+          <span className="text-[11px] text-slate-300 mt-1 block">Search, moderate, & delete extra/test IDs</span>
+        </Link>
 
         <div className="rounded-xl border border-lime-sprout/30 bg-fresh-canopy/30 p-5">
           <div className="flex items-center justify-between">

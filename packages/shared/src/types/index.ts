@@ -299,3 +299,18 @@ export interface MilestoneBadge {
   unit: string;
 }
 
+export interface AdminUserRecord extends UserSummary {
+  currentRank: RankTier;
+  rankPoints: number;
+}
+
+export interface AdminUserListResponse {
+  users: AdminUserRecord[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+

@@ -22,6 +22,7 @@ import { SubmissionsPage } from './pages/SubmissionsPage';
 import { StudioPage } from './pages/StudioPage';
 import { ApprovalQueuePage } from './pages/ApprovalQueuePage';
 import { CastingBoardPage } from './pages/CastingBoardPage';
+import { UserManagementPage } from './pages/UserManagementPage';
 import { ForbiddenPage, NotFoundPage } from './pages/ForbiddenPage';
 import { MobileBridge } from './components/MobileBridge';
 
@@ -83,16 +84,7 @@ export const App: React.FC = () => {
           {/* Admin Protected Routes (Theme: Combo 05 Fresh Canopy & Lime Sprout) */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminOverview />} />
-            <Route
-              path="users"
-              element={
-                <RoadmapPlaceholder
-                  title="User & Role Administration"
-                  phase="Phase 3"
-                  description="Assign casting director privileges, review account statuses, and moderate student profiles."
-                />
-              }
-            />
+            <Route path="users" element={<UserManagementPage />} />
             <Route
               path="approvals"
               element={<ApprovalQueuePage />}

@@ -18,8 +18,8 @@ import submissionRoutes from './routes/submissionRoutes.js';
 import evaluationRoutes from './routes/evaluationRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import directorTalentRoutes from './routes/directorTalentRoutes.js';
+import adminUserRoutes from './routes/adminUserRoutes.js';
 import { RANK_TIERS, AWARDS_CATALOG, DEDUCTIONS_CATALOG } from '@pdi/shared';
-
 
 export function createApp() {
   const app = express();
@@ -125,6 +125,7 @@ export function createApp() {
   app.use('/api/v1', evaluationRoutes);
   app.use('/api/v1/notifications', notificationRoutes);
   app.use('/api/v1/director', directorTalentRoutes);
+  app.use('/api/v1/admin', adminUserRoutes);
   app.use('/api/v1', roleProtectedRoutes);
 
   // Serve Frontend React SPA if dist folder exists

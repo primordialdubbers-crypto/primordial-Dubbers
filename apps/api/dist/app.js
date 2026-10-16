@@ -24,6 +24,7 @@ const submissionRoutes_js_1 = __importDefault(require("./routes/submissionRoutes
 const evaluationRoutes_js_1 = __importDefault(require("./routes/evaluationRoutes.js"));
 const notificationRoutes_js_1 = __importDefault(require("./routes/notificationRoutes.js"));
 const directorTalentRoutes_js_1 = __importDefault(require("./routes/directorTalentRoutes.js"));
+const adminUserRoutes_js_1 = __importDefault(require("./routes/adminUserRoutes.js"));
 const shared_1 = require("@pdi/shared");
 function createApp() {
     const app = (0, express_1.default)();
@@ -115,6 +116,7 @@ function createApp() {
     app.use('/api/v1', evaluationRoutes_js_1.default);
     app.use('/api/v1/notifications', notificationRoutes_js_1.default);
     app.use('/api/v1/director', directorTalentRoutes_js_1.default);
+    app.use('/api/v1/admin', adminUserRoutes_js_1.default);
     app.use('/api/v1', roleProtectedRoutes_js_1.default);
     // Serve Frontend React SPA if dist folder exists
     const candidateDistPaths = [
