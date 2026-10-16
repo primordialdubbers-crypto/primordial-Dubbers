@@ -28,6 +28,23 @@ export declare const loginSchema: z.ZodObject<{
     email: string;
     password: string;
 }>;
+export declare const resetPasswordSchema: z.ZodObject<{
+    email: z.ZodString;
+    newPassword: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    email: string;
+    newPassword: string;
+}, {
+    email: string;
+    newPassword: string;
+}>;
+export declare const adminResetPasswordSchema: z.ZodObject<{
+    newPassword: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    newPassword: string;
+}, {
+    newPassword: string;
+}>;
 export declare const updateProfileSchema: z.ZodObject<{
     displayName: z.ZodOptional<z.ZodString>;
     bio: z.ZodOptional<z.ZodString>;
@@ -360,6 +377,8 @@ export declare const createEvaluationSchema: z.ZodObject<{
 }>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type AdminResetPasswordInput = z.infer<typeof adminResetPasswordSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type CreatePointTransactionInput = z.infer<typeof createPointTransactionSchema>;
 export type CreatePointProposalInput = z.infer<typeof createPointProposalSchema>;

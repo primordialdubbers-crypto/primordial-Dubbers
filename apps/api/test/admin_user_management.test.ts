@@ -191,4 +191,23 @@ describe('Phase 8: Admin User Management, Search & Deletion API', () => {
     const updatedUser = await User.findById(studentUser._id);
     expect(updatedUser?.status).toBe('suspended');
   });
+
+  it('allows Admin to directly reset a student password', async () => {
+    const res = await request(app)
+      .post(`/api/v1/admin/users/${studentUser._id}/reset-password`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ newPassword: 'NewAdminAssignedPass123' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toContain('reset successfully');
+
+    // Verify student can now login with this new password
+    const loginRes = await request(app).post('/api/v1/auth/login').send({
+      email: studentUser.email,
+      password: 'NewAdminAssignedPass123',
+    });
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.data.token).toBeDefined();
+  });
 });

@@ -3,9 +3,7 @@ export const registerSchema = z.object({
     email: z.string().trim().email('Invalid email address').toLowerCase(),
     password: z
         .string()
-        .min(8, 'Password must be at least 8 characters')
-        .regex(/[A-Za-z]/, 'Password must contain at least one letter')
-        .regex(/[0-9]/, 'Password must contain at least one number'),
+        .min(6, 'Password must be at least 6 characters'),
     displayName: z
         .string()
         .trim()
@@ -16,8 +14,15 @@ export const registerSchema = z.object({
     adminInviteToken: z.string().optional(),
 });
 export const loginSchema = z.object({
-    email: z.string().trim().email('Invalid email address').toLowerCase(),
+    email: z.string().trim().min(1, 'Email or username is required'),
     password: z.string().min(1, 'Password is required'),
+});
+export const resetPasswordSchema = z.object({
+    email: z.string().trim().email('Invalid email address').toLowerCase(),
+    newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+});
+export const adminResetPasswordSchema = z.object({
+    newPassword: z.string().min(6, 'Password must be at least 6 characters'),
 });
 export const updateProfileSchema = z.object({
     displayName: z.string().trim().min(2).max(50).optional(),

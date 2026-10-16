@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import {
   User,
   ArtistProfile,
@@ -227,6 +228,57 @@ export class AdminUserController {
         data: {
           userId: targetUser._id.toString(),
           status: targetUser.status,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * POST /api/v1/admin/users/:userId/reset-password
+   * Allows an administrator to reset a user's password directly.
+   */
+  static async resetUserPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { userId } = req.params;
+      const { newPassword } = req.body;
+
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid user ID provided',
+          error: { code: 'INVALID_USER_ID' },
+        });
+      }
+
+      if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password must be at least 6 characters long',
+          error: { code: 'INVALID_PASSWORD' },
+        });
+      }
+
+      const targetUser = await User.findById(userId);
+      if (!targetUser) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found in system',
+          error: { code: 'USER_NOT_FOUND' },
+        });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      targetUser.passwordHash = await bcrypt.hash(newPassword, salt);
+      await targetUser.save();
+
+      res.status(200).json({
+        success: true,
+        message: `Password for "${targetUser.displayName}" (${targetUser.email}) has been reset successfully.`,
+        data: {
+          userId: targetUser._id.toString(),
+          email: targetUser.email,
         },
       });
     } catch (err) {

@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  KeyRound,
 } from 'lucide-react';
 
 export const UserManagementPage: React.FC = () => {
@@ -33,6 +34,11 @@ export const UserManagementPage: React.FC = () => {
   // Deletion Confirmation Modal State
   const [userToDelete, setUserToDelete] = useState<AdminUserRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  // Password Reset Modal State
+  const [userToResetPassword, setUserToResetPassword] = useState<AdminUserRecord | null>(null);
+  const [adminNewPassword, setAdminNewPassword] = useState<string>('');
+  const [isResettingPassword, setIsResettingPassword] = useState<boolean>(false);
 
   // Status Update State
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
@@ -140,6 +146,48 @@ export const UserManagementPage: React.FC = () => {
       });
     } finally {
       setStatusUpdatingId(null);
+    }
+  };
+
+  const handleAdminResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userToResetPassword) return;
+
+    if (adminNewPassword.length < 6) {
+      setFeedback({ type: 'error', message: 'New password must be at least 6 characters long.' });
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`/api/v1/admin/users/${userToResetPassword.id}/reset-password`, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({ newPassword: adminNewPassword }),
+      });
+
+      const body = await res.json();
+      if (!res.ok) {
+        throw new Error(body.message || 'Failed to reset password');
+      }
+
+      setFeedback({
+        type: 'success',
+        message: `Password for "${userToResetPassword.displayName}" (${userToResetPassword.email}) updated to "${adminNewPassword}".`,
+      });
+      setUserToResetPassword(null);
+      setAdminNewPassword('');
+    } catch (err: any) {
+      setFeedback({
+        type: 'error',
+        message: err.message || 'Error occurred while resetting password.',
+      });
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -375,6 +423,18 @@ export const UserManagementPage: React.FC = () => {
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {/* Reset Password Button */}
+                          <button
+                            onClick={() => {
+                              setUserToResetPassword(u);
+                              setAdminNewPassword('pdi' + Math.floor(100000 + Math.random() * 900000));
+                            }}
+                            className="p-1.5 rounded-lg border border-purple-800/60 bg-purple-950/40 text-purple-300 hover:bg-purple-900/60 transition-colors"
+                            title="Reset User Password"
+                          >
+                            <KeyRound size={14} />
+                          </button>
+
                           {/* Suspend / Activate toggle */}
                           {!isSelf && !isProtected && (
                             <button
@@ -512,6 +572,99 @@ export const UserManagementPage: React.FC = () => {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Password Reset Modal */}
+      {userToResetPassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-950 border border-purple-800/80 rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
+            <button
+              onClick={() => setUserToResetPassword(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-3 text-purple-400">
+              <div className="w-10 h-10 rounded-full bg-purple-950 border border-purple-800 flex items-center justify-center">
+                <KeyRound size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white font-heading">
+                  Reset User Password
+                </h3>
+                <span className="text-xs text-purple-400 font-mono">Administrative Credential Override</span>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+              <p className="text-sm font-bold text-white">{userToResetPassword.displayName}</p>
+              <p className="text-xs font-mono text-slate-400">{userToResetPassword.email}</p>
+              <div className="flex items-center gap-2 pt-1">
+                <RankBadge rank={userToResetPassword.currentRank} size="sm" />
+                <span className="text-xs font-mono text-cyber-lime font-bold">
+                  {userToResetPassword.rankPoints.toLocaleString()} PTS
+                </span>
+              </div>
+            </div>
+
+            <form onSubmit={handleAdminResetPassword} className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    New Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setAdminNewPassword('pdi' + Math.floor(100000 + Math.random() * 900000))}
+                    className="text-[11px] text-cyber-lime hover:underline font-mono"
+                  >
+                    Generate Random
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={adminNewPassword}
+                  onChange={(e) => setAdminNewPassword(e.target.value)}
+                  placeholder="Min 6 characters"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm font-mono text-cyber-lime focus:outline-none focus:border-cyber-lime"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Provide this password to the artist so they can sign in immediately.
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUserToResetPassword(null)}
+                  disabled={isResettingPassword}
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isResettingPassword}
+                  className="px-4 py-2 rounded-lg bg-cyber-lime hover:bg-lime-400 text-xs font-bold text-black transition-colors flex items-center gap-1.5 shadow-lg shadow-cyber-lime/20"
+                >
+                  {isResettingPassword ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <KeyRound size={14} />
+                      <span>Update Password</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

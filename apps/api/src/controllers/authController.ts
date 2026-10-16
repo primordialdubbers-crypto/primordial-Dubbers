@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import {
   registerSchema,
   loginSchema,
+  resetPasswordSchema,
   calculateRankFromPoints,
   AuthSessionResponse,
   UserSummary,
@@ -38,10 +39,11 @@ function clearAuthCookie(res: Response): void {
 export async function register(req: Request, res: Response): Promise<void> {
   const parseResult = registerSchema.safeParse(req.body);
   if (!parseResult.success) {
+    const errorMsg = parseResult.error.issues.map((i) => i.message).join('. ');
     res.status(400).json({
       success: false,
-      message: 'Invalid registration details.',
-      error: { code: 'VALIDATION_ERROR', details: parseResult.error.flatten() },
+      message: errorMsg || 'Invalid registration details.',
+      error: { code: 'VALIDATION_ERROR', details: parseResult.error.flatten(), message: errorMsg },
     });
     return;
   }
@@ -147,17 +149,29 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
   try {
     const parseResult = loginSchema.safeParse(req.body);
     if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues.map((i) => i.message).join('. ');
       res.status(400).json({
         success: false,
-        message: 'Invalid login details.',
+        message: errorMsg || 'Invalid login details.',
         error: { code: 'VALIDATION_ERROR', details: parseResult.error.flatten() },
       });
       return;
     }
 
-    const { email, password } = parseResult.data;
+    const { email: rawIdentifier, password } = parseResult.data;
+    const identifier = rawIdentifier.trim();
+    const escaped = identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    const user = await User.findOne({ email });
+    let user = await User.findOne({
+      email: { $regex: new RegExp(`^${escaped}$`, 'i') },
+    });
+
+    if (!user && !identifier.includes('@')) {
+      user = await User.findOne({
+        displayName: { $regex: new RegExp(`^${escaped}$`, 'i') },
+      });
+    }
+
     if (!user) {
       res.status(401).json({
         success: false,
@@ -284,4 +298,47 @@ export async function getCurrentUser(req: AuthenticatedRequest, res: Response): 
       profile: profileSummary,
     },
   });
+}
+
+export async function resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const parseResult = resetPasswordSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues.map((i) => i.message).join('. ');
+      res.status(400).json({
+        success: false,
+        message: errorMsg || 'Invalid reset details.',
+        error: { code: 'VALIDATION_ERROR', details: parseResult.error.flatten() },
+      });
+      return;
+    }
+
+    const { email: rawEmail, newPassword } = parseResult.data;
+    const email = rawEmail.trim().toLowerCase();
+    const escaped = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const user = await User.findOne({
+      email: { $regex: new RegExp(`^${escaped}$`, 'i') },
+    });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: 'No account registered with this email address.',
+        error: { code: 'USER_NOT_FOUND' },
+      });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully. You can now login with your new password.',
+    });
+  } catch (err) {
+    next(err);
+  }
 }

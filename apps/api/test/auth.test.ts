@@ -163,5 +163,53 @@ describe('Authentication API (/api/v1/auth)', () => {
     });
     expect(loginRes.status).toBe(200);
     expect(loginRes.body.data.user.email).toBe('normaluser@example.com');
+
+    // Login using displayName as fallback
+    const nameLoginRes = await request(app).post('/api/v1/auth/login').send({
+      email: 'Normalized User',
+      password: 'SecretPass123!',
+    });
+    expect(nameLoginRes.status).toBe(200);
+    expect(nameLoginRes.body.data.user.email).toBe('normaluser@example.com');
+  });
+
+  it('allows self-service password reset with valid email and new password', async () => {
+    await request(app).post('/api/v1/auth/register').send({
+      email: 'forgot@example.com',
+      password: 'OldPassword123',
+      displayName: 'Forgot User',
+    });
+
+    // Reset password
+    const resetRes = await request(app).post('/api/v1/auth/reset-password').send({
+      email: 'FORGOT@example.com',
+      newPassword: 'BrandNewPassword123',
+    });
+    expect(resetRes.status).toBe(200);
+    expect(resetRes.body.success).toBe(true);
+
+    // Old password should fail
+    const oldLogin = await request(app).post('/api/v1/auth/login').send({
+      email: 'forgot@example.com',
+      password: 'OldPassword123',
+    });
+    expect(oldLogin.status).toBe(401);
+
+    // New password should succeed
+    const newLogin = await request(app).post('/api/v1/auth/login').send({
+      email: 'forgot@example.com',
+      password: 'BrandNewPassword123',
+    });
+    expect(newLogin.status).toBe(200);
+    expect(newLogin.body.data.token).toBeDefined();
+  });
+
+  it('rejects password reset for non-existent email', async () => {
+    const res = await request(app).post('/api/v1/auth/reset-password').send({
+      email: 'nonexistent@example.com',
+      newPassword: 'BrandNewPassword123',
+    });
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('USER_NOT_FOUND');
   });
 });

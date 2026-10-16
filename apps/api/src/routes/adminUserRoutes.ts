@@ -11,5 +11,6 @@ router.use(requireRole('admin', 'superadmin'));
 router.get('/users', AdminUserController.listUsers);
 router.delete('/users/:userId', AdminUserController.deleteUser);
 router.patch('/users/:userId/status', AdminUserController.updateUserStatus);
+router.post('/users/:userId/reset-password', AdminUserController.resetUserPassword);
 
 export default router;

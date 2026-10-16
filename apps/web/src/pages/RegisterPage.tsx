@@ -25,6 +25,11 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     setError(null);
 
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match. Please verify your confirm password.');
       return;
@@ -33,7 +38,7 @@ export const RegisterPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await register(email, password, displayName, role, inviteToken ? inviteToken.trim() : undefined);
+      await register(email.trim(), password, displayName.trim(), role, inviteToken ? inviteToken.trim() : undefined);
       if (role === 'admin') navigate('/admin');
       else if (role === 'director') navigate('/director');
       else navigate('/student');
@@ -97,7 +102,7 @@ export const RegisterPage: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-              Password (Min 8 chars, 1 letter, 1 number)
+              Password (Min 6 characters)
             </label>
             <div className="relative">
               <input
