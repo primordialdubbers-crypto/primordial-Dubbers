@@ -7,7 +7,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   activeRole: Role | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, forceLogoutOthers?: boolean) => Promise<void>;
   register: (
     email: string,
     password: string,
@@ -70,17 +70,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshMe();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, forceLogoutOthers?: boolean) => {
     const res = await fetch('/api/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, forceLogoutOthers }),
     });
 
     const body = await res.json();
     if (!res.ok) {
-      throw new Error(body.message || 'Login failed');
+      const err: any = new Error(body.message || 'Login failed');
+      err.code = body.error?.code;
+      err.status = res.status;
+      err.details = body.error;
+      throw err;
     }
 
     setUser(body.data.user);
@@ -120,9 +124,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      const storedToken = localStorage.getItem('pdi_token');
+      const headers: Record<string, string> = {};
+      if (storedToken) {
+        headers['Authorization'] = `Bearer ${storedToken}`;
+      }
       await fetch('/api/v1/auth/logout', {
         method: 'POST',
         credentials: 'include',
+        headers,
       });
     } catch (e) {
       console.warn('Logout request warning:', e);

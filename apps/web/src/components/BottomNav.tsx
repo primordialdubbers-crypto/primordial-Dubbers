@@ -160,9 +160,9 @@ export const BottomNav: React.FC = () => {
         {/* Bottom Nav Bar */}
         <nav 
           aria-label="Admin Bottom Navigation" 
-          className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-lime-900/40 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]"
+          className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-lime-900/40 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[max(0.4rem,env(safe-area-inset-bottom))] select-none touch-manipulation"
         >
-          <div className="max-w-lg md:max-w-xl mx-auto flex items-center justify-around px-2 py-1.5 sm:py-2">
+          <div className="max-w-lg md:max-w-xl mx-auto flex items-center justify-around px-1.5 sm:px-2 py-1 sm:py-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
 
@@ -172,14 +172,14 @@ export const BottomNav: React.FC = () => {
                   <Link
                     key={tab.label}
                     to={tab.path!}
-                    className="flex flex-col items-center -mt-6 group focus:outline-none"
+                    className="flex flex-col items-center -mt-6 group focus:outline-none min-h-[44px] min-w-[50px] justify-center"
                   >
-                    <div className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg transition-all transform group-hover:scale-105 group-active:scale-95 ${
+                    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg transition-all transform group-hover:scale-105 group-active:scale-95 ${
                       active 
                         ? 'bg-lime-sprout text-slate-950 ring-4 ring-lime-sprout/30 shadow-lime-sprout/40' 
                         : 'bg-fresh-canopy border-2 border-lime-sprout text-lime-sprout shadow-lime-sprout/20 hover:bg-lime-sprout hover:text-slate-950'
                     }`}>
-                      <Icon className="w-6 h-6 stroke-[2.5]" />
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
                     </div>
                     <span className={`text-[10px] font-heading tracking-wider mt-1 font-bold ${
                       active ? 'text-lime-sprout' : 'text-slate-300 group-hover:text-lime-sprout'
@@ -197,7 +197,7 @@ export const BottomNav: React.FC = () => {
                     key={tab.label}
                     type="button"
                     onClick={tab.action}
-                    className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all focus:outline-none ${
+                    className={`flex flex-col items-center justify-center py-1 px-2 sm:px-2.5 rounded-xl transition-all focus:outline-none min-h-[44px] min-w-[48px] active:scale-95 ${
                       active 
                         ? 'text-lime-sprout scale-105' 
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
@@ -223,7 +223,7 @@ export const BottomNav: React.FC = () => {
                 <Link
                   key={tab.label}
                   to={tab.path!}
-                  className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all focus:outline-none ${
+                  className={`flex flex-col items-center justify-center py-1 px-2 sm:px-2.5 rounded-xl transition-all focus:outline-none min-h-[44px] min-w-[48px] active:scale-95 ${
                     active 
                       ? 'text-lime-sprout scale-105' 
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
@@ -355,9 +355,9 @@ export const BottomNav: React.FC = () => {
 
         <nav 
           aria-label="Director Bottom Navigation" 
-          className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-sky-900/50 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]"
+          className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-sky-900/50 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[max(0.4rem,env(safe-area-inset-bottom))] select-none touch-manipulation"
         >
-          <div className="max-w-lg md:max-w-xl mx-auto flex items-center justify-around px-2 py-1.5 sm:py-2">
+          <div className="max-w-lg md:max-w-xl mx-auto flex items-center justify-around px-1.5 sm:px-2 py-1 sm:py-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
 
@@ -367,14 +367,14 @@ export const BottomNav: React.FC = () => {
                   <Link
                     key={tab.label}
                     to={tab.path!}
-                    className="flex flex-col items-center -mt-6 group focus:outline-none"
+                    className="flex flex-col items-center -mt-6 group focus:outline-none min-h-[44px] min-w-[50px] justify-center"
                   >
-                    <div className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg transition-all transform group-hover:scale-105 group-active:scale-95 ${
+                    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg transition-all transform group-hover:scale-105 group-active:scale-95 ${
                       active 
                         ? 'bg-sky-400 text-slate-950 ring-4 ring-sky-400/30 shadow-sky-400/40' 
                         : 'bg-sky-950 border-2 border-sky-400 text-sky-400 shadow-sky-400/20 hover:bg-sky-400 hover:text-slate-950'
                     }`}>
-                      <Icon className="w-6 h-6 stroke-[2.5]" />
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
                     </div>
                     <span className={`text-[10px] font-heading tracking-wider mt-1 font-bold ${
                       active ? 'text-sky-400' : 'text-slate-300 group-hover:text-sky-400'
@@ -392,7 +392,7 @@ export const BottomNav: React.FC = () => {
                     key={tab.label}
                     type="button"
                     onClick={tab.action}
-                    className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all focus:outline-none ${
+                    className={`flex flex-col items-center justify-center py-1 px-2 sm:px-2.5 rounded-xl transition-all focus:outline-none min-h-[44px] min-w-[48px] active:scale-95 ${
                       active 
                         ? 'text-sky-400 scale-105' 
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
@@ -418,7 +418,7 @@ export const BottomNav: React.FC = () => {
                 <Link
                   key={tab.label}
                   to={tab.path!}
-                  className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all focus:outline-none ${
+                  className={`flex flex-col items-center justify-center py-1 px-2 sm:px-2.5 rounded-xl transition-all focus:outline-none min-h-[44px] min-w-[48px] active:scale-95 ${
                     active 
                       ? 'text-sky-400 scale-105' 
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
@@ -458,9 +458,9 @@ export const BottomNav: React.FC = () => {
     return (
       <nav 
         aria-label="Student Bottom Navigation" 
-        className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/80 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/80 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[max(0.4rem,env(safe-area-inset-bottom))] select-none touch-manipulation"
       >
-        <div className="max-w-lg md:max-w-xl mx-auto flex items-center justify-around px-2 py-1.5 sm:py-2">
+        <div className="max-w-lg md:max-w-xl mx-auto flex items-center justify-around px-1.5 sm:px-2 py-1 sm:py-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const active = isCurrent(tab.path);
@@ -470,14 +470,14 @@ export const BottomNav: React.FC = () => {
                 <Link
                   key={tab.path}
                   to={tab.path}
-                  className="flex flex-col items-center -mt-6 group focus:outline-none"
+                  className="flex flex-col items-center -mt-6 group focus:outline-none min-h-[44px] min-w-[50px] justify-center"
                 >
-                  <div className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg transition-all transform group-hover:scale-105 group-active:scale-95 ${
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg transition-all transform group-hover:scale-105 group-active:scale-95 ${
                     active 
                       ? 'bg-cyber-lime text-slate-950 ring-4 ring-cyber-lime/30 shadow-cyber-lime/40' 
                       : 'bg-charcoal-violet border-2 border-cyber-lime text-cyber-lime shadow-cyber-lime/20 hover:bg-cyber-lime hover:text-slate-950'
                   }`}>
-                    <Icon className="w-6 h-6 stroke-[2.5]" />
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
                   </div>
                   <span className={`text-[10px] font-heading tracking-wider mt-1 font-bold ${
                     active ? 'text-cyber-lime' : 'text-slate-300 group-hover:text-cyber-lime'
@@ -492,7 +492,7 @@ export const BottomNav: React.FC = () => {
               <Link
                 key={tab.path}
                 to={tab.path}
-                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all focus:outline-none ${
+                className={`flex flex-col items-center justify-center py-1 px-2 sm:px-2.5 rounded-xl transition-all focus:outline-none min-h-[44px] min-w-[48px] active:scale-95 ${
                   active 
                     ? 'text-cyber-lime scale-105' 
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
@@ -529,9 +529,9 @@ export const BottomNav: React.FC = () => {
   return (
     <nav 
       aria-label="Public Bottom Navigation" 
-      className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/80 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/80 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[max(0.4rem,env(safe-area-inset-bottom))] select-none touch-manipulation"
     >
-      <div className="max-w-lg md:max-w-xl mx-auto flex items-center justify-around px-2 py-1.5 sm:py-2">
+      <div className="max-w-lg md:max-w-xl mx-auto flex items-center justify-around px-1.5 sm:px-2 py-1 sm:py-2">
         {guestTabs.map((tab) => {
           const Icon = tab.icon;
           const active = isCurrent(tab.path);
@@ -540,7 +540,7 @@ export const BottomNav: React.FC = () => {
             <Link
               key={tab.path}
               to={tab.path}
-              className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all focus:outline-none ${
+              className={`flex flex-col items-center justify-center py-1 px-2 sm:px-3 rounded-xl transition-all focus:outline-none min-h-[44px] min-w-[48px] active:scale-95 ${
                 active 
                   ? 'text-cyber-lime scale-105' 
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'

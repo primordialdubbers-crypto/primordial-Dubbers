@@ -32,11 +32,14 @@ export const LoginPage: React.FC = () => {
   const [forgotError, setForgotError] = useState<string | null>(null);
   const [forgotLoading, setForgotLoading] = useState(false);
 
+  const [sessionLimitExceeded, setSessionLimitExceeded] = useState(false);
+
   const from = (location.state as any)?.from?.pathname || '/student';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSessionLimitExceeded(false);
     setSuccessMsg(null);
     setIsSubmitting(true);
 
@@ -44,7 +47,25 @@ export const LoginPage: React.FC = () => {
       await login(email.trim(), password);
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Invalid email/username or password.');
+      if (err.code === 'ACTIVE_SESSION_LIMIT_EXCEEDED' || err.status === 429) {
+        setSessionLimitExceeded(true);
+        setError(err.message || 'Maximum 2 active devices reached for this account.');
+      } else {
+        setError(err.message || 'Invalid email/username or password.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleForceLogin = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await login(email.trim(), password, true);
+      navigate(from, { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in.');
     } finally {
       setIsSubmitting(false);
     }
@@ -115,7 +136,29 @@ export const LoginPage: React.FC = () => {
           </div>
         )}
 
-        {error && (
+        {sessionLimitExceeded && (
+          <div className="mb-4 p-4 rounded-xl bg-amber-950/70 border border-amber-500/60 space-y-3 animate-in fade-in">
+            <div className="flex items-start gap-2.5 text-amber-200 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+              <div>
+                <p className="font-semibold text-amber-300">Active Device Limit (2 Devices) Reached</p>
+                <p className="mt-0.5 text-amber-200/90 leading-relaxed">
+                  Your PDI account is currently active on 2 other devices or browsers. To sign in on this device, you can log out from the other devices.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleForceLogin}
+              disabled={isSubmitting}
+              className="w-full py-2.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs tracking-wide transition-colors shadow-lg shadow-amber-500/20 disabled:opacity-50"
+            >
+              {isSubmitting ? 'Logging Out Others...' : 'Log Out Other Devices & Sign In Here'}
+            </button>
+          </div>
+        )}
+
+        {error && !sessionLimitExceeded && (
           <div className="mb-4 p-3 rounded-lg bg-rose-950/60 border border-rose-500/50 flex items-center gap-2 text-rose-300 text-xs">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>

@@ -950,7 +950,7 @@ export const AdminOverview: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[650px]">
                 <thead>
                   <tr className="bg-slate-900 border-b border-pdi-border text-slate-400 uppercase font-mono text-[10px]">
                     <th className="py-3 px-4">Student</th>

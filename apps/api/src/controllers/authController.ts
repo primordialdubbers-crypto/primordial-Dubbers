@@ -9,9 +9,10 @@ import {
   UserSummary,
   ArtistProfileSummary,
 } from '@pdi/shared';
+import crypto from 'crypto';
 import { User } from '../models/User.js';
 import { ArtistProfile } from '../models/ArtistProfile.js';
-import { signToken } from '../utils/token.js';
+import { signToken, verifyToken } from '../utils/token.js';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 import { config } from '../config/env.js';
 
@@ -79,12 +80,22 @@ export async function register(req: Request, res: Response): Promise<void> {
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash(password, salt);
 
+  const sessionId = crypto.randomUUID();
   const user = await User.create({
     email,
     displayName,
     passwordHash,
     roles: [assignedRole],
     status: 'active',
+    activeSessions: [
+      {
+        sessionId,
+        createdAt: new Date(),
+        lastActive: new Date(),
+        userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'].slice(0, 255) : undefined,
+        ip: req.ip,
+      },
+    ],
   });
 
   let artistProfile = null;
@@ -121,6 +132,7 @@ export async function register(req: Request, res: Response): Promise<void> {
     userId: user._id.toString(),
     email: user.email,
     roles: user.roles,
+    sessionId,
   });
 
   setAuthCookie(res, token);
@@ -175,7 +187,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
       return;
     }
 
-    const { email: rawIdentifier, password } = parseResult.data;
+    const { email: rawIdentifier, password, forceLogoutOthers } = parseResult.data;
     const identifier = rawIdentifier.trim();
     const escaped = identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -217,12 +229,47 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
       return;
     }
 
+    // Active session limit enforcement (Max 2 concurrent devices)
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const validSessions = (user.activeSessions || []).filter(
+      (s) => now - new Date(s.lastActive || s.createdAt).getTime() < SEVEN_DAYS_MS
+    );
+
+    if (forceLogoutOthers) {
+      user.activeSessions = [];
+    } else if (validSessions.length >= 2) {
+      res.status(429).json({
+        success: false,
+        message: 'Active session limit reached (maximum 2 devices). Please log out from another device or choose "Log out other devices" to continue.',
+        error: {
+          code: 'ACTIVE_SESSION_LIMIT_EXCEEDED',
+          activeSessionsCount: validSessions.length,
+          maxAllowed: 2,
+        },
+      });
+      return;
+    } else {
+      user.activeSessions = validSessions;
+    }
+
+    const sessionId = crypto.randomUUID();
+    user.activeSessions.push({
+      sessionId,
+      createdAt: new Date(),
+      lastActive: new Date(),
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'].slice(0, 255) : undefined,
+      ip: req.ip,
+    });
+    await user.save();
+
     const artistProfile = await ArtistProfile.findOne({ userId: user._id });
 
     const token = signToken({
       userId: user._id.toString(),
       email: user.email,
       roles: user.roles,
+      sessionId,
     });
 
     setAuthCookie(res, token);
@@ -268,6 +315,23 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 }
 
 export async function logout(req: Request, res: Response): Promise<void> {
+  let token = req.cookies?.pdi_token;
+  if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+  if (token) {
+    try {
+      const payload = verifyToken(token);
+      if (payload.sessionId && payload.userId) {
+        await User.updateOne(
+          { _id: payload.userId },
+          { $pull: { activeSessions: { sessionId: payload.sessionId } } }
+        );
+      }
+    } catch {
+      // Ignore token verification errors during logout
+    }
+  }
   clearAuthCookie(res);
   res.status(200).json({
     success: true,

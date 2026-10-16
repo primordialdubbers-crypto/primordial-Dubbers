@@ -50,6 +50,26 @@ export async function authenticate(
       return;
     }
 
+    if (payload.sessionId && Array.isArray(user.activeSessions) && user.activeSessions.length > 0) {
+      const activeSession = user.activeSessions.find((s) => s.sessionId === payload.sessionId);
+      if (!activeSession) {
+        res.status(401).json({
+          success: false,
+          message: 'Your session has been terminated or logged out from this device.',
+          error: { code: 'SESSION_TERMINATED' },
+        });
+        return;
+      }
+      // Update lastActive timestamp if older than 5 minutes to avoid frequent writes
+      const fiveMinsAgo = Date.now() - 5 * 60 * 1000;
+      if (new Date(activeSession.lastActive).getTime() < fiveMinsAgo) {
+        User.updateOne(
+          { _id: user._id, 'activeSessions.sessionId': payload.sessionId },
+          { $set: { 'activeSessions.$.lastActive': new Date() } }
+        ).catch(() => {});
+      }
+    }
+
     req.user = user;
     req.jwtPayload = payload;
     next();

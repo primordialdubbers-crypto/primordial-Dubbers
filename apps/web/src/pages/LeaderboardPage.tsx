@@ -114,21 +114,21 @@ export const LeaderboardPage: React.FC = () => {
         </div>
 
         {/* Search and Tier Filter Controls */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder={activeTab === 'staff' ? 'Search staff or director...' : 'Search voice artist...'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 rounded-lg bg-pdi-surface border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyber-lime w-52 md:w-56"
+              className="pl-9 pr-4 py-2.5 rounded-lg bg-pdi-surface border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyber-lime w-full sm:w-56"
             />
           </div>
           <select
             value={selectedTier}
             onChange={(e) => setSelectedTier(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-pdi-surface border border-slate-700 text-xs text-white focus:outline-none focus:border-cyber-lime"
+            className="px-3 py-2.5 rounded-lg bg-pdi-surface border border-slate-700 text-xs text-white focus:outline-none focus:border-cyber-lime w-full sm:w-auto"
           >
             <option value="ALL">All Tiers</option>
             <option value="S">S Tier</option>
@@ -202,7 +202,7 @@ export const LeaderboardPage: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[580px]">
                 <thead className="bg-slate-900/90 text-slate-400 font-mono uppercase tracking-wider border-b border-slate-800">
                   <tr>
                     <th className="px-6 py-4">Rank</th>
@@ -280,7 +280,7 @@ export const LeaderboardPage: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[580px]">
                 <thead className="bg-slate-900/90 text-slate-400 font-mono uppercase tracking-wider border-b border-slate-800">
                   <tr>
                     <th className="px-6 py-4">Standing</th>

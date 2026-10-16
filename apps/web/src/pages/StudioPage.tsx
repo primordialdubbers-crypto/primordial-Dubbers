@@ -854,7 +854,7 @@ export const StudioPage: React.FC = () => {
           <div className="p-6 rounded-2xl bg-charcoal-violet/50 border border-cyber-lime/30 shadow-2xl space-y-5">
             {/* VOICE CHECK & MICROPHONE CALIBRATION */}
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
                 <span className="text-xs font-bold text-white uppercase font-heading flex items-center gap-1.5">
                   <Headphones size={14} className="text-cyber-lime" /> Microphone Voice Check
                 </span>
@@ -863,7 +863,7 @@ export const StudioPage: React.FC = () => {
                   type="button"
                   onClick={startLoopbackTest}
                   disabled={isTestingMic}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyber-lime text-[11px] font-semibold font-mono flex items-center gap-1 transition-colors disabled:opacity-50"
+                  className="w-full sm:w-auto justify-center px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyber-lime text-[11px] font-semibold font-mono flex items-center gap-1 transition-colors disabled:opacity-50"
                 >
                   <Headphones size={12} />
                   {loopbackStatus === 'recording'
@@ -947,12 +947,12 @@ export const StudioPage: React.FC = () => {
                   {formatTime(recordingSeconds)}
                 </div>
 
-                <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center justify-center">
                   {!isRecording ? (
                     <button
                       type="button"
                       onClick={startRecording}
-                      className="px-6 py-3 rounded-xl bg-cyber-lime hover:bg-lime-400 text-slate-950 font-heading font-black text-sm flex items-center gap-2 shadow-lg shadow-cyber-lime/20 transition-all hover:scale-105"
+                      className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-cyber-lime hover:bg-lime-400 text-slate-950 font-heading font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyber-lime/20 transition-all hover:scale-105 active:scale-95 min-h-[48px]"
                     >
                       <Mic size={18} />
                       <span>{recordedBlob ? 'Record New Take' : 'Start Recording'}</span>
@@ -961,7 +961,7 @@ export const StudioPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={stopRecording}
-                      className="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-heading font-black text-sm flex items-center gap-2 shadow-lg shadow-rose-600/30 animate-pulse transition-all"
+                      className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-heading font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 animate-pulse transition-all active:scale-95 min-h-[48px]"
                     >
                       <Square size={18} />
                       <span>Stop Recording Take</span>
@@ -1158,12 +1158,12 @@ export const StudioPage: React.FC = () => {
                 </div>
 
                 {/* Action Buttons: Discard Take, Synchronized Dual-Preview & Submit */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={resetTake}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 text-xs flex items-center gap-1 transition-colors"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 text-xs flex items-center gap-1 transition-colors min-h-[44px] active:scale-95"
                     >
                       <RotateCcw size={13} /> Discard & Reset
                     </button>
@@ -1172,14 +1172,14 @@ export const StudioPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={handleToggleSyncPreview}
-                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm ${
+                        className={`flex-1 sm:flex-none justify-center px-3 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm min-h-[44px] active:scale-95 ${
                           isPreviewSyncing
                             ? 'bg-rose-950 border-rose-600 text-rose-200'
                             : 'bg-charcoal-violet border-cyber-lime/40 text-cyber-lime hover:bg-charcoal-violet/80'
                         }`}
                       >
                         {isPreviewSyncing ? <Pause size={13} /> : <Play size={13} />}
-                        <span>{isPreviewSyncing ? 'Stop Sync Preview' : 'Test Sync (Video + Take)'}</span>
+                        <span>{isPreviewSyncing ? 'Stop Sync' : 'Test Sync (Video + Take)'}</span>
                       </button>
                     )}
                   </div>
@@ -1188,7 +1188,7 @@ export const StudioPage: React.FC = () => {
                     type="button"
                     disabled={isSubmitting}
                     onClick={handleSubmitTake}
-                    className="px-5 py-2 rounded-lg bg-cyber-lime hover:bg-lime-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-cyber-lime/20 transition-all disabled:opacity-50"
+                    className="w-full sm:w-auto justify-center px-5 py-2.5 rounded-lg bg-cyber-lime hover:bg-lime-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-cyber-lime/20 transition-all disabled:opacity-50 min-h-[44px] active:scale-95"
                   >
                     <Upload size={14} />
                     <span>{isSubmitting ? 'Submitting Take...' : 'Submit Dubbing Take'}</span>

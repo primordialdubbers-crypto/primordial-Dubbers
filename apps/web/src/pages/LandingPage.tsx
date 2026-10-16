@@ -26,43 +26,43 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-16 py-8">
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-slate-900/90 via-pdi-surface to-pdi-bg border border-pdi-border p-8 md:p-14 text-center max-w-6xl mx-auto w-full">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-slate-900/90 via-pdi-surface to-pdi-bg border border-pdi-border p-5 sm:p-8 md:p-14 text-center max-w-6xl mx-auto w-full">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-600/10 via-transparent to-transparent pointer-events-none" />
         
         <div className="flex justify-center mb-6">
           <img
             src="/pdi-logo.jpg"
             alt="Primordial Dubbers India Logo"
-            className="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-contain border-2 border-slate-700/80 shadow-2xl shadow-blue-500/25 bg-black p-2"
+            className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl object-contain border-2 border-slate-700/80 shadow-2xl shadow-blue-500/25 bg-black p-2"
           />
         </div>
 
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyber-lime/30 bg-charcoal-violet/50 text-cyber-lime text-xs font-mono uppercase tracking-widest mb-6">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyber-lime/30 bg-charcoal-violet/50 text-cyber-lime text-[11px] sm:text-xs font-mono uppercase tracking-widest mb-6">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Official PDI Voice Academy Baseline</span>
         </div>
 
-        <h1 className="text-4xl md:text-6xl font-extrabold tracking-wider text-white font-heading mb-4">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-wider text-white font-heading mb-3 sm:mb-4">
           PRIMORDIAL DUBBERS <span className="text-pdi-blue">INDIA</span>
         </h1>
-        <p className="text-2xl md:text-3xl font-semibold tracking-wide text-slate-200 font-heading mb-6">
+        <p className="text-lg sm:text-2xl md:text-3xl font-semibold tracking-wide text-slate-200 font-heading mb-6">
           EARN YOUR RANK. <span className="text-cyber-lime">MASTER YOUR VOICE.</span>
         </p>
 
         {user ? (
-          <div className="max-w-lg mx-auto mb-8 p-4 rounded-xl bg-slate-900/80 border border-slate-700/80 shadow-lg flex items-center justify-between">
-            <div className="flex items-center gap-3 text-left">
-              <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-cyber-lime uppercase text-sm">
+          <div className="max-w-lg mx-auto mb-8 p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-700/80 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+            <div className="flex items-center gap-3 text-left w-full sm:w-auto">
+              <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-cyber-lime uppercase text-sm shrink-0">
                 {user.displayName.charAt(0)}
               </div>
-              <div>
-                <span className="text-xs text-slate-400 block">Logged In Artist</span>
-                <span className="text-sm font-bold text-white">{user.displayName}</span>
+              <div className="min-w-0">
+                <span className="text-xs text-slate-400 block truncate">Logged In Artist</span>
+                <span className="text-sm font-bold text-white block truncate">{user.displayName}</span>
               </div>
             </div>
 
             {profile && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-t-0 border-slate-800 pt-2 sm:pt-0">
                 <RankBadge rank={profile.currentRank} size="sm" />
                 <span className="text-xs font-mono font-bold text-cyber-lime flex items-center gap-1">
                   <Zap size={13} /> {profile.rankPoints.toLocaleString()} PTS
@@ -71,28 +71,28 @@ export const LandingPage: React.FC = () => {
             )}
           </div>
         ) : (
-          <p className="max-w-2xl mx-auto text-slate-300 text-sm md:text-base leading-relaxed mb-8">
+          <p className="max-w-2xl mx-auto text-slate-300 text-xs sm:text-sm md:text-base leading-relaxed mb-8">
             The premier platform for voice actors and dubbing artists. Dub professional scenes, submit
             browser-recorded takes, receive 100-point rubric critiques from casting directors, and rise through the official PDI rank tiers.
           </p>
         )}
 
-        <div className="flex flex-wrap items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto">
           {user ? (
             <>
               <Link
                 to="/student/studio"
-                className="px-6 py-3 rounded-lg bg-cyber-lime text-black font-heading font-bold text-base hover:bg-lime-400 shadow-lg shadow-cyber-lime/20 flex items-center gap-2 transition-all hover:scale-105"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-cyber-lime text-black font-heading font-bold text-sm sm:text-base hover:bg-lime-400 shadow-lg shadow-cyber-lime/20 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
               >
-                <Mic2 className="w-5 h-5" />
+                <Mic2 className="w-5 h-5 shrink-0" />
                 <span>ENTER DUBBING STUDIO</span>
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 shrink-0" />
               </Link>
               <Link
                 to={getDashboardPath()}
-                className="px-6 py-3 rounded-lg border border-slate-700 bg-pdi-surface hover:bg-slate-800 text-slate-200 font-heading font-semibold text-base transition-colors flex items-center gap-2"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-700 bg-pdi-surface hover:bg-slate-800 text-slate-200 font-heading font-semibold text-sm sm:text-base transition-colors flex items-center justify-center gap-2 active:scale-95"
               >
-                <User className="w-4 h-4" />
+                <User className="w-4 h-4 shrink-0" />
                 <span>GO TO MY DASHBOARD</span>
               </Link>
             </>
@@ -100,14 +100,14 @@ export const LandingPage: React.FC = () => {
             <>
               <Link
                 to="/register"
-                className="px-6 py-3 rounded-lg bg-cyber-lime text-black font-heading font-bold text-base hover:bg-lime-400 shadow-lg shadow-cyber-lime/20 flex items-center gap-2 transition-all hover:scale-105"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-cyber-lime text-black font-heading font-bold text-sm sm:text-base hover:bg-lime-400 shadow-lg shadow-cyber-lime/20 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
               >
                 <span>JOIN THE ACADEMY</span>
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 shrink-0" />
               </Link>
               <Link
                 to="/rules"
-                className="px-6 py-3 rounded-lg border border-slate-700 bg-pdi-surface hover:bg-slate-800 text-slate-200 font-heading font-semibold text-base transition-colors"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-700 bg-pdi-surface hover:bg-slate-800 text-slate-200 font-heading font-semibold text-sm sm:text-base transition-colors flex items-center justify-center active:scale-95"
               >
                 EXPLORE RANK TIERS & RULES
               </Link>

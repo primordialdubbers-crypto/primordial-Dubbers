@@ -138,8 +138,8 @@ export const StudentDashboard: React.FC = () => {
               {user?.displayName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold font-heading text-white">{user?.displayName}</h1>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <h1 className="text-xl sm:text-2xl font-bold font-heading text-white">{user?.displayName}</h1>
                 <RankBadge rank={rank} size="md" />
                 {serverVerified && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyber-lime/10 border border-cyber-lime/30 text-[10px] text-cyber-lime font-mono">

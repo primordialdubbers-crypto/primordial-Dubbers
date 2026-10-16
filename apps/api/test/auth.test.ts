@@ -164,6 +164,9 @@ describe('Authentication API (/api/v1/auth)', () => {
     expect(loginRes.status).toBe(200);
     expect(loginRes.body.data.user.email).toBe('normaluser@example.com');
 
+    // Logout session to free up device slot
+    await request(app).post('/api/v1/auth/logout').set('Authorization', `Bearer ${loginRes.body.data.token}`);
+
     // Login using displayName as fallback
     const nameLoginRes = await request(app).post('/api/v1/auth/login').send({
       email: 'Normalized User',
@@ -211,5 +214,106 @@ describe('Authentication API (/api/v1/auth)', () => {
     });
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe('USER_NOT_FOUND');
+  });
+
+  describe('Concurrent Session Management (Max 2 Active Logins)', () => {
+    const sessionEmail = 'multilogin@example.com';
+    const sessionPass = 'SecurePass123!';
+
+    beforeEach(async () => {
+      await request(app).post('/api/v1/auth/register').send({
+        email: sessionEmail,
+        password: sessionPass,
+        displayName: 'Multi Device User',
+      });
+      // Clear initial registration session to test login count cleanly
+      await User.updateOne({ email: sessionEmail }, { $set: { activeSessions: [] } });
+    });
+
+    it('permits up to 2 active sessions and rejects a 3rd session with 429', async () => {
+      // Session 1: Mobile device
+      const res1 = await request(app)
+        .post('/api/v1/auth/login')
+        .set('User-Agent', 'PDI-Mobile-App/1.0')
+        .send({ email: sessionEmail, password: sessionPass });
+      expect(res1.status).toBe(200);
+      const token1 = res1.body.data.token;
+
+      // Session 2: Laptop browser
+      const res2 = await request(app)
+        .post('/api/v1/auth/login')
+        .set('User-Agent', 'Chrome-Desktop/120.0')
+        .send({ email: sessionEmail, password: sessionPass });
+      expect(res2.status).toBe(200);
+      const token2 = res2.body.data.token;
+
+      // Verify both sessions can access /api/v1/auth/me
+      const me1 = await request(app).get('/api/v1/auth/me').set('Authorization', `Bearer ${token1}`);
+      expect(me1.status).toBe(200);
+
+      const me2 = await request(app).get('/api/v1/auth/me').set('Authorization', `Bearer ${token2}`);
+      expect(me2.status).toBe(200);
+
+      // Session 3: Attempting 3rd login from tablet without forceLogoutOthers
+      const res3 = await request(app)
+        .post('/api/v1/auth/login')
+        .set('User-Agent', 'iPad-Safari/17.0')
+        .send({ email: sessionEmail, password: sessionPass });
+
+      expect(res3.status).toBe(429);
+      expect(res3.body.success).toBe(false);
+      expect(res3.body.error.code).toBe('ACTIVE_SESSION_LIMIT_EXCEEDED');
+      expect(res3.body.error.maxAllowed).toBe(2);
+      expect(res3.body.error.activeSessionsCount).toBe(2);
+
+      // Verify earlier sessions are still active
+      const stillMe1 = await request(app).get('/api/v1/auth/me').set('Authorization', `Bearer ${token1}`);
+      expect(stillMe1.status).toBe(200);
+    });
+
+    it('allows logging out other devices with forceLogoutOthers: true', async () => {
+      // Establish 2 initial sessions
+      const s1 = await request(app).post('/api/v1/auth/login').send({ email: sessionEmail, password: sessionPass });
+      const token1 = s1.body.data.token;
+      await request(app).post('/api/v1/auth/login').send({ email: sessionEmail, password: sessionPass });
+
+      // 3rd login with forceLogoutOthers = true
+      const forceRes = await request(app).post('/api/v1/auth/login').send({
+        email: sessionEmail,
+        password: sessionPass,
+        forceLogoutOthers: true,
+      });
+
+      expect(forceRes.status).toBe(200);
+      expect(forceRes.body.success).toBe(true);
+      const newToken = forceRes.body.data.token;
+
+      // Old session token1 should now be revoked (SESSION_TERMINATED)
+      const oldCheck = await request(app).get('/api/v1/auth/me').set('Authorization', `Bearer ${token1}`);
+      expect(oldCheck.status).toBe(401);
+      expect(oldCheck.body.error.code).toBe('SESSION_TERMINATED');
+
+      // New token works
+      const newCheck = await request(app).get('/api/v1/auth/me').set('Authorization', `Bearer ${newToken}`);
+      expect(newCheck.status).toBe(200);
+    });
+
+    it('revokes session on explicit logout allowing subsequent login', async () => {
+      // 2 sessions
+      const s1 = await request(app).post('/api/v1/auth/login').send({ email: sessionEmail, password: sessionPass });
+      const token1 = s1.body.data.token;
+      await request(app).post('/api/v1/auth/login').send({ email: sessionEmail, password: sessionPass });
+
+      // Logout device 1
+      const logoutRes = await request(app)
+        .post('/api/v1/auth/logout')
+        .set('Authorization', `Bearer ${token1}`);
+      expect(logoutRes.status).toBe(200);
+
+      // Now a 3rd login can take device 1's freed spot without 429
+      const s3 = await request(app).post('/api/v1/auth/login').send({ email: sessionEmail, password: sessionPass });
+      expect(s3.status).toBe(200);
+      expect(s3.body.data.token).toBeDefined();
+    });
   });
 });

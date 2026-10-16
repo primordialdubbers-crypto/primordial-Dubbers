@@ -317,7 +317,7 @@ export const UserManagementPage: React.FC = () => {
       ) : (
         <div className="rounded-xl border border-pdi-border bg-pdi-surface overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-collapse min-w-[650px]">
               <thead>
                 <tr className="border-b border-pdi-border bg-slate-950/60 font-mono uppercase text-[10px] text-slate-400">
                   <th className="py-3.5 px-4">User / Artist</th>
