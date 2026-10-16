@@ -9,6 +9,19 @@ export interface RankDefinition {
 }
 export declare const RANK_TIERS: Record<RankTier, RankDefinition>;
 export declare const S_RANK_DISPLAY_MILESTONE = 50000;
+export interface StaffRankDefinition {
+    tier: RankTier;
+    designation: string;
+    minPoints: number;
+    maxPoints: number;
+    level: string;
+    colorHex: string;
+}
+export declare const STAFF_RANK_TIERS: Record<RankTier, StaffRankDefinition>;
+export declare function calculateStaffRankFromPoints(points: number): {
+    tier: RankTier;
+    designation: string;
+};
 export declare function calculateRankFromPoints(points: number): RankTier;
 export interface RankProgressInfo {
     currentTier: RankTier;
@@ -42,6 +55,32 @@ export declare const AWARDS_CATALOG: readonly [{
     readonly code: "CONSISTENCY_MILESTONE";
     readonly name: "Quality & Consistency Milestone";
     readonly points: 200;
+}];
+export declare const STAFF_AWARDS_CATALOG: readonly [{
+    readonly code: "STAFF_REVIEW_TIMELY";
+    readonly name: "Timely Audition Review & Scoring";
+    readonly points: 50;
+    readonly category: "evaluation";
+}, {
+    readonly code: "STAFF_CASTING_MATCH";
+    readonly name: "Successful Talent Casting & Role Match";
+    readonly points: 100;
+    readonly category: "casting";
+}, {
+    readonly code: "STAFF_QC_AUDIT";
+    readonly name: "Script & Dubbing Audio QC Audit";
+    readonly points: 75;
+    readonly category: "quality_control";
+}, {
+    readonly code: "STAFF_STUDENT_MENTOR";
+    readonly name: "Student Workshop & Mentorship";
+    readonly points: 150;
+    readonly category: "mentorship";
+}, {
+    readonly code: "STAFF_ADMIN_MERIT";
+    readonly name: "Executive Administrative Excellence";
+    readonly points: 200;
+    readonly category: "governance";
 }];
 export declare const DEDUCTIONS_CATALOG: readonly [{
     readonly code: "PRONUNCIATION_MINOR";

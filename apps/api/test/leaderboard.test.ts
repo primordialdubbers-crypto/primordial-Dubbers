@@ -64,6 +64,23 @@ beforeAll(async () => {
     publicOptIn: false,
     performanceAverage: 90.0,
   });
+  // Staff user (Director)
+  const uStaff = await User.create({
+    email: 'director@example.com',
+    displayName: 'Chief Casting Director',
+    passwordHash: 'hash',
+    roles: ['director'],
+    status: 'active',
+  });
+  await ArtistProfile.create({
+    userId: uStaff._id,
+    displayName: 'Chief Casting Director',
+    rankPoints: 6500,
+    currentRank: 'A',
+    profileType: 'staff',
+    staffDesignation: 'Senior Director',
+    publicOptIn: true,
+  });
 });
 
 afterAll(async () => {
@@ -73,10 +90,11 @@ afterAll(async () => {
 });
 
 describe('Leaderboard API (/api/v1/leaderboard)', () => {
-  it('returns opted-in artists sorted by rank points descending', async () => {
+  it('returns opted-in artists sorted by rank points descending and strictly excludes staff', async () => {
     const res = await request(app).get('/api/v1/leaderboard');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
+    expect(res.body.data.type).toBe('student');
     expect(res.body.data.totalCount).toBe(2);
 
     const items = res.body.data.leaderboard;
@@ -86,6 +104,10 @@ describe('Leaderboard API (/api/v1/leaderboard)', () => {
 
     expect(items[1].displayName).toBe('Developing Voice');
     expect(items[1].currentRank).toBe('C');
+
+    // Ensure staff member Chief Casting Director is NOT on student leaderboard
+    const staffOnBoard = items.find((i: any) => i.displayName === 'Chief Casting Director');
+    expect(staffOnBoard).toBeUndefined();
   });
 
   it('filters by rank tier when query parameter is provided', async () => {
@@ -100,5 +122,38 @@ describe('Leaderboard API (/api/v1/leaderboard)', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.totalCount).toBe(1);
     expect(res.body.data.leaderboard[0].displayName).toBe('Developing Voice');
+  });
+
+  it('rejects unauthenticated or student requests to staff leaderboard with 403 Forbidden', async () => {
+    const res = await request(app).get('/api/v1/leaderboard?type=staff');
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error?.code).toBe('STAFF_RANKING_FORBIDDEN');
+  });
+
+  it('returns staff rankings with designations and points for authenticated staff', async () => {
+    const staffUser = await User.findOne({ email: 'director@example.com' });
+    const { signToken } = await import('../src/utils/token.js');
+    const token = signToken({
+      userId: staffUser!._id.toString(),
+      email: staffUser!.email,
+      roles: staffUser!.roles,
+    });
+
+    const res = await request(app)
+      .get('/api/v1/leaderboard?type=staff')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.type).toBe('staff');
+    expect(res.body.data.totalCount).toBeGreaterThanOrEqual(1);
+
+    const staffEntry = res.body.data.leaderboard.find((s: any) => s.email === 'director@example.com');
+    expect(staffEntry).toBeDefined();
+    expect(staffEntry.displayName).toBe('Chief Casting Director');
+    expect(staffEntry.currentRank).toBe('A');
+    expect(staffEntry.staffDesignation).toBe('Senior Director');
+    expect(staffEntry.rankPoints).toBe(6500);
   });
 });

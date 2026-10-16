@@ -88,14 +88,29 @@ export async function register(req: Request, res: Response): Promise<void> {
   });
 
   let artistProfile = null;
-  // Create an artist profile for any user with student role (or by default)
-  if (user.roles.includes('student')) {
+  const isStaff = user.roles.some((r) => ['director', 'admin', 'superadmin'].includes(r));
+  if (isStaff) {
+    artistProfile = await ArtistProfile.create({
+      userId: user._id,
+      displayName: user.displayName,
+      voiceTypes: user.roles.includes('director') ? ['Casting Director'] : ['Administrator'],
+      bio: '',
+      publicOptIn: false,
+      profileType: 'staff',
+      staffDesignation: user.roles.includes('admin') || user.roles.includes('superadmin') ? 'Lead Executive Director' : 'Casting Director',
+      rankPoints: user.roles.includes('director') ? 2500 : 10000,
+      currentRank: user.roles.includes('director') ? 'B' : 'S',
+      performanceAverage: 100,
+    });
+  } else {
     artistProfile = await ArtistProfile.create({
       userId: user._id,
       displayName: user.displayName,
       voiceTypes: [],
       bio: '',
       publicOptIn: true,
+      profileType: 'student',
+      staffDesignation: null,
       rankPoints: 0,
       currentRank: calculateRankFromPoints(0),
       performanceAverage: 0,
@@ -129,6 +144,8 @@ export async function register(req: Request, res: Response): Promise<void> {
         rankPoints: artistProfile.rankPoints,
         currentRank: artistProfile.currentRank,
         performanceAverage: artistProfile.performanceAverage,
+        profileType: artistProfile.profileType,
+        staffDesignation: artistProfile.staffDesignation || undefined,
       }
     : undefined;
 
@@ -229,6 +246,8 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
           rankPoints: artistProfile.rankPoints,
           currentRank: artistProfile.currentRank,
           performanceAverage: artistProfile.performanceAverage,
+          profileType: artistProfile.profileType,
+          staffDesignation: artistProfile.staffDesignation || undefined,
         }
       : undefined;
 
@@ -288,6 +307,8 @@ export async function getCurrentUser(req: AuthenticatedRequest, res: Response): 
         rankPoints: artistProfile.rankPoints,
         currentRank: artistProfile.currentRank,
         performanceAverage: artistProfile.performanceAverage,
+        profileType: artistProfile.profileType,
+        staffDesignation: artistProfile.staffDesignation || undefined,
       }
     : undefined;
 

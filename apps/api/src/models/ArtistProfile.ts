@@ -1,5 +1,5 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
-import { RankTier } from '@pdi/shared';
+import { RankTier, ProfileType } from '@pdi/shared';
 
 export interface IArtistProfile extends Document {
   _id: mongoose.Types.ObjectId;
@@ -12,6 +12,8 @@ export interface IArtistProfile extends Document {
   rankPoints: number;
   currentRank: RankTier;
   performanceAverage: number;
+  profileType: ProfileType;
+  staffDesignation?: string | null;
   version: number;
   createdAt: Date;
   updatedAt: Date;
@@ -64,6 +66,16 @@ const artistProfileSchema = new Schema<IArtistProfile>(
     performanceAverage: {
       type: Number,
       default: 0,
+    },
+    profileType: {
+      type: String,
+      enum: ['student', 'staff'],
+      default: 'student',
+      index: true,
+    },
+    staffDesignation: {
+      type: String,
+      default: null,
     },
     version: {
       type: Number,

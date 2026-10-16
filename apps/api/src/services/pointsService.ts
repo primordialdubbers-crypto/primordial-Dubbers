@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import {
   calculateRankFromPoints,
+  calculateStaffRankFromPoints,
   getRankProgress,
   PointSourceType,
   RankTier,
@@ -148,7 +149,14 @@ export class PointsService {
         const balanceAfter = Math.max(0, balanceBefore + delta);
 
         const oldRank = profile.currentRank;
-        const newRank = calculateRankFromPoints(balanceAfter);
+        let newRank: RankTier;
+        if (profile.profileType === 'staff') {
+          const staffRank = calculateStaffRankFromPoints(balanceAfter);
+          newRank = staffRank.tier;
+          profile.staffDesignation = staffRank.designation;
+        } else {
+          newRank = calculateRankFromPoints(balanceAfter);
+        }
         const rankChanged = oldRank !== newRank;
 
         // 4. Create immutable PointTransaction ledger entry

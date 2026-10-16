@@ -9,6 +9,20 @@ export interface UserSummary {
     status: UserStatus;
     createdAt: string;
 }
+export type ProfileType = 'student' | 'staff';
+export interface StaffLeaderboardEntry {
+    id: string;
+    userId: string;
+    displayName: string;
+    email?: string;
+    currentRank: RankTier;
+    staffDesignation: string;
+    rankPoints: number;
+    roles: Role[];
+    reviewsConducted?: number;
+    bio?: string;
+    createdAt?: string;
+}
 export interface ArtistProfileSummary {
     userId: string;
     displayName: string;
@@ -20,6 +34,8 @@ export interface ArtistProfileSummary {
     currentRank: RankTier;
     performanceAverage: number;
     milestones?: MilestoneBadge[];
+    profileType?: ProfileType;
+    staffDesignation?: string;
 }
 export type PointProposalStatus = 'pending' | 'approved' | 'rejected';
 export type PointSourceType = 'review' | 'manual_award' | 'manual_deduction' | 'challenge' | 'appeal_reversal';

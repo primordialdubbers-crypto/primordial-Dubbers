@@ -54,6 +54,75 @@ export const RANK_TIERS: Record<RankTier, RankDefinition> = {
 
 export const S_RANK_DISPLAY_MILESTONE = 50000;
 
+export interface StaffRankDefinition {
+  tier: RankTier;
+  designation: string;
+  minPoints: number;
+  maxPoints: number;
+  level: string;
+  colorHex: string;
+}
+
+export const STAFF_RANK_TIERS: Record<RankTier, StaffRankDefinition> = {
+  ED: {
+    tier: 'ED',
+    designation: 'Junior Reviewer',
+    minPoints: 0,
+    maxPoints: 999,
+    level: 'Audition Review Probation',
+    colorHex: '#94A3B8',
+  },
+  C: {
+    tier: 'C',
+    designation: 'Associate Director',
+    minPoints: 1000,
+    maxPoints: 2499,
+    level: 'Session QC & Evaluation',
+    colorHex: '#38BDF8',
+  },
+  B: {
+    tier: 'B',
+    designation: 'Casting Director',
+    minPoints: 2500,
+    maxPoints: 4999,
+    level: 'Talent Scouting & Casting',
+    colorHex: '#818CF8',
+  },
+  A: {
+    tier: 'A',
+    designation: 'Senior Director',
+    minPoints: 5000,
+    maxPoints: 9999,
+    level: 'Lead Production & Mentorship',
+    colorHex: '#FBBF24',
+  },
+  S: {
+    tier: 'S',
+    designation: 'Lead Executive Director',
+    minPoints: 10000,
+    maxPoints: Number.MAX_SAFE_INTEGER,
+    level: 'Executive Supervision & Governance',
+    colorHex: '#F43F5E',
+  },
+};
+
+export function calculateStaffRankFromPoints(points: number): { tier: RankTier; designation: string } {
+  const safePoints = Math.max(0, points);
+  if (safePoints >= STAFF_RANK_TIERS.S.minPoints) {
+    return { tier: 'S', designation: STAFF_RANK_TIERS.S.designation };
+  }
+  if (safePoints >= STAFF_RANK_TIERS.A.minPoints) {
+    return { tier: 'A', designation: STAFF_RANK_TIERS.A.designation };
+  }
+  if (safePoints >= STAFF_RANK_TIERS.B.minPoints) {
+    return { tier: 'B', designation: STAFF_RANK_TIERS.B.designation };
+  }
+  if (safePoints >= STAFF_RANK_TIERS.C.minPoints) {
+    return { tier: 'C', designation: STAFF_RANK_TIERS.C.designation };
+  }
+  return { tier: 'ED', designation: STAFF_RANK_TIERS.ED.designation };
+}
+
 export function calculateRankFromPoints(points: number): RankTier {
   const safePoints = Math.max(0, points);
   if (safePoints >= RANK_TIERS.S.minPoints) return 'S';
@@ -147,6 +216,14 @@ export const AWARDS_CATALOG = [
   { code: 'ROLE_APPROVED', name: 'Approved Dubbing Role', points: 100 },
   { code: 'SCENE_MASTERY', name: 'Difficult Scene Mastery', points: 100 },
   { code: 'CONSISTENCY_MILESTONE', name: 'Quality & Consistency Milestone', points: 200 },
+] as const;
+
+export const STAFF_AWARDS_CATALOG = [
+  { code: 'STAFF_REVIEW_TIMELY', name: 'Timely Audition Review & Scoring', points: 50, category: 'evaluation' },
+  { code: 'STAFF_CASTING_MATCH', name: 'Successful Talent Casting & Role Match', points: 100, category: 'casting' },
+  { code: 'STAFF_QC_AUDIT', name: 'Script & Dubbing Audio QC Audit', points: 75, category: 'quality_control' },
+  { code: 'STAFF_STUDENT_MENTOR', name: 'Student Workshop & Mentorship', points: 150, category: 'mentorship' },
+  { code: 'STAFF_ADMIN_MERIT', name: 'Executive Administrative Excellence', points: 200, category: 'governance' },
 ] as const;
 
 export const DEDUCTIONS_CATALOG = [

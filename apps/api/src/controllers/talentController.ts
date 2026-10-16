@@ -27,6 +27,7 @@ export class TalentController {
 
       const filter: any = {
         publicOptIn: true,
+        profileType: { $ne: 'staff' },
       };
 
       if (rank && ['ED', 'C', 'B', 'A', 'S'].includes(rank as string)) {

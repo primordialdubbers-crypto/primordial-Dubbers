@@ -66,12 +66,20 @@ export async function ensureAdminUser(): Promise<void> {
       voiceTypes: ['Administrator'],
       languages: ['English', 'Hindi'],
       publicOptIn: false,
+      profileType: 'staff',
+      staffDesignation: 'Lead Executive Director',
       rankPoints: 50000,
       currentRank: 'S',
       performanceAverage: 100,
       version: 1,
     });
     console.log(`[PDI MongoDB Init] Created artistProfile record for admin in MongoDB: ${adminEmail}`);
+  } else if (profile.profileType !== 'staff' || !profile.staffDesignation) {
+    profile.profileType = 'staff';
+    profile.staffDesignation = 'Lead Executive Director';
+    profile.publicOptIn = false;
+    await profile.save();
+    console.log(`[PDI MongoDB Init] Updated admin profile to staff type in MongoDB: ${adminEmail}`);
   }
 
   // Automatically purge legacy static demo accounts from MongoDB (e.g. admin@pdi.academy, director@pdi.academy)

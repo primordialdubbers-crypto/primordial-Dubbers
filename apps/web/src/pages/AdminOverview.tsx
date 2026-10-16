@@ -22,7 +22,7 @@ import {
   SlidersHorizontal,
   UserCheck
 } from 'lucide-react';
-import { AWARDS_CATALOG, DEDUCTIONS_CATALOG } from '@pdi/shared';
+import { AWARDS_CATALOG, DEDUCTIONS_CATALOG, STAFF_AWARDS_CATALOG } from '@pdi/shared';
 
 interface Proposal {
   id: string;
@@ -64,6 +64,8 @@ interface ArtistItem {
   email?: string;
   currentRank: string;
   rankPoints: number;
+  roles?: string[];
+  staffDesignation?: string;
 }
 
 export const AdminOverview: React.FC = () => {
@@ -88,8 +90,10 @@ export const AdminOverview: React.FC = () => {
   const [appealResolutionNote, setAppealResolutionNote] = useState<Record<string, string>>({});
 
   // Direct adjustment form state
+  const [pointsRecipientType, setPointsRecipientType] = useState<'student' | 'staff'>('student');
   const [adjustStudentId, setAdjustStudentId] = useState<string>('');
   const [artists, setArtists] = useState<ArtistItem[]>([]);
+  const [staffList, setStaffList] = useState<ArtistItem[]>([]);
   const [isLoadingArtists, setIsLoadingArtists] = useState<boolean>(false);
   const [adjustDelta, setAdjustDelta] = useState<number>(50);
   const [adjustCategory, setAdjustCategory] = useState<string>('training');
@@ -159,18 +163,46 @@ export const AdminOverview: React.FC = () => {
       if (res.ok) {
         const body = await res.json();
         if (body.success && body.data?.users) {
-          const list: ArtistItem[] = body.data.users
-            .filter((u: any) => u.roles?.includes('student') || !u.roles?.includes('superadmin'))
+          const rawUsers = body.data.users;
+
+          const studentList: ArtistItem[] = rawUsers
+            .filter(
+              (u: any) =>
+                u.roles?.includes('student') &&
+                !u.roles?.includes('director') &&
+                !u.roles?.includes('admin') &&
+                !u.roles?.includes('superadmin')
+            )
             .map((u: any) => ({
               userId: u.id,
               displayName: u.displayName,
               email: u.email,
               currentRank: u.currentRank || 'ED',
               rankPoints: u.rankPoints ?? 0,
+              roles: u.roles,
             }));
-          setArtists(list);
-          if (list.length > 0 && !adjustStudentId) {
-            setAdjustStudentId(list[0].userId);
+          setArtists(studentList);
+
+          const staffUserList: ArtistItem[] = rawUsers
+            .filter((u: any) =>
+              u.roles?.some((r: string) => ['admin', 'director', 'superadmin'].includes(r))
+            )
+            .map((u: any) => ({
+              userId: u.id,
+              displayName: u.displayName,
+              email: u.email,
+              currentRank: u.currentRank || 'ED',
+              rankPoints: u.rankPoints ?? 0,
+              roles: u.roles,
+            }));
+          setStaffList(staffUserList);
+
+          if (!adjustStudentId) {
+            if (pointsRecipientType === 'student' && studentList.length > 0) {
+              setAdjustStudentId(studentList[0].userId);
+            } else if (pointsRecipientType === 'staff' && staffUserList.length > 0) {
+              setAdjustStudentId(staffUserList[0].userId);
+            }
           }
           return;
         }
@@ -337,6 +369,13 @@ export const AdminOverview: React.FC = () => {
             : a
         )
       );
+      setStaffList((prev) =>
+        prev.map((s) =>
+          s.userId === adjustStudentId
+            ? { ...s, rankPoints: body.data.balanceAfter, currentRank: body.data.newRank }
+            : s
+        )
+      );
       setAdjustReason('');
     } catch (err: any) {
       setFeedback({ type: 'error', message: err?.message || 'Failed to adjust points' });
@@ -352,7 +391,8 @@ export const AdminOverview: React.FC = () => {
     setAdjustReason(reason);
   };
 
-  const selectedArtist = artists.find((a) => a.userId === adjustStudentId);
+  const currentList = pointsRecipientType === 'staff' ? staffList : artists;
+  const selectedArtist = currentList.find((a) => a.userId === adjustStudentId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -492,84 +532,145 @@ export const AdminOverview: React.FC = () => {
             </button>
           </div>
 
+          {/* Target Audience Switcher: Students vs Staff */}
+          <div className="flex items-center gap-3 bg-slate-900/90 p-1.5 rounded-xl border border-slate-700/80 w-fit">
+            <button
+              type="button"
+              onClick={() => {
+                setPointsRecipientType('student');
+                if (artists.length > 0) setAdjustStudentId(artists[0].userId);
+                applyPreset(50, 'training', 'Completed scheduled dubbing training session');
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+                pointsRecipientType === 'student'
+                  ? 'bg-lime-sprout text-black font-bold shadow-md shadow-lime-sprout/20'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <Users size={14} />
+              <span>🎙️ Voice Artists / Students</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPointsRecipientType('staff');
+                if (staffList.length > 0) setAdjustStudentId(staffList[0].userId);
+                applyPreset(50, 'evaluation', 'Timely Audition Review & Scoring');
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+                pointsRecipientType === 'staff'
+                  ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <ShieldCheck size={14} className="text-amber-300" />
+              <span>👔 Staff & Casting Directors</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 font-mono">
+                Staff Points
+              </span>
+            </button>
+          </div>
+
           {/* Quick Presets Chips */}
           <div className="space-y-2">
             <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block">
-              Quick 1-Click Presets:
+              {pointsRecipientType === 'staff'
+                ? 'Staff Performance Merit Presets:'
+                : 'Voice Artist 1-Click Presets:'}
             </span>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => applyPreset(50, 'training', 'Completed scheduled dubbing training session')}
-                className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900 transition-colors font-medium"
-              >
-                ⭐ Training (+50)
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset(100, 'role_approved', 'Cast and approved for official character role')}
-                className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900 transition-colors font-medium"
-              >
-                🎬 Role Approved (+100)
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset(100, 'scene_mastery', 'Demonstrated exceptional lip sync scene mastery')}
-                className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900 transition-colors font-medium"
-              >
-                🌟 Scene Mastery (+100)
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset(20, 'audition', 'Submitted verified audition challenge')}
-                className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900 transition-colors font-medium"
-              >
-                🎙️ Audition Take (+20)
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset(200, 'consistency', 'Maintained 30-day streak of active dubbing takes')}
-                className="px-2.5 py-1 rounded-lg bg-lime-950/80 text-lime-300 border border-lime-700/60 hover:bg-lime-900 transition-colors font-medium"
-              >
-                🏆 Consistency (+200)
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset(-10, 'deduction_pronunciation', 'Phonetic/pronunciation defect on key dialogue')}
-                className="px-2.5 py-1 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-700/60 hover:bg-rose-900 transition-colors font-medium"
-              >
-                ⚠️ Pronunciation (-10)
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset(-20, 'deduction_lipsync', 'Severe lip sync mismatch (>300ms drift)')}
-                className="px-2.5 py-1 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-700/60 hover:bg-rose-900 transition-colors font-medium"
-              >
-                ⚠️ Lip Sync (-20)
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset(-25, 'deduction_audio', 'Excessive room reverb, distortion, or background noise')}
-                className="px-2.5 py-1 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-700/60 hover:bg-rose-900 transition-colors font-medium"
-              >
-                ⚠️ Audio Quality (-25)
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset(-30, 'deduction_deadline', 'Failed to submit scene audition by scheduled deadline')}
-                className="px-2.5 py-1 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-700/60 hover:bg-rose-900 transition-colors font-medium"
-              >
-                ⚠️ Deadline (-30)
-              </button>
-            </div>
+
+            {pointsRecipientType === 'staff' ? (
+              <div className="flex flex-wrap gap-2 text-xs">
+                {STAFF_AWARDS_CATALOG.map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => applyPreset(item.points, item.category, item.name)}
+                    className="px-2.5 py-1 rounded-lg bg-indigo-950/80 text-indigo-300 border border-indigo-700/60 hover:bg-indigo-900 transition-colors font-medium flex items-center gap-1.5"
+                  >
+                    <span>⭐ {item.name}</span>
+                    <span className="font-mono text-amber-300 font-bold">+{item.points}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => applyPreset(50, 'training', 'Completed scheduled dubbing training session')}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900 transition-colors font-medium"
+                >
+                  ⭐ Training (+50)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(100, 'role_approved', 'Cast and approved for official character role')}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900 transition-colors font-medium"
+                >
+                  🎬 Role Approved (+100)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(100, 'scene_mastery', 'Demonstrated exceptional lip sync scene mastery')}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900 transition-colors font-medium"
+                >
+                  🌟 Scene Mastery (+100)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(20, 'audition', 'Submitted verified audition challenge')}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900 transition-colors font-medium"
+                >
+                  🎙️ Audition Take (+20)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(200, 'consistency', 'Maintained 30-day streak of active dubbing takes')}
+                  className="px-2.5 py-1 rounded-lg bg-lime-950/80 text-lime-300 border border-lime-700/60 hover:bg-lime-900 transition-colors font-medium"
+                >
+                  🏆 Consistency (+200)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(-10, 'deduction_pronunciation', 'Phonetic/pronunciation defect on key dialogue')}
+                  className="px-2.5 py-1 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-700/60 hover:bg-rose-900 transition-colors font-medium"
+                >
+                  ⚠️ Pronunciation (-10)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(-20, 'deduction_lipsync', 'Severe lip sync mismatch (>300ms drift)')}
+                  className="px-2.5 py-1 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-700/60 hover:bg-rose-900 transition-colors font-medium"
+                >
+                  ⚠️ Lip Sync (-20)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(-25, 'deduction_audio', 'Excessive room reverb, distortion, or background noise')}
+                  className="px-2.5 py-1 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-700/60 hover:bg-rose-900 transition-colors font-medium"
+                >
+                  ⚠️ Audio Quality (-25)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(-30, 'deduction_deadline', 'Failed to submit scene audition by scheduled deadline')}
+                  className="px-2.5 py-1 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-700/60 hover:bg-rose-900 transition-colors font-medium"
+                >
+                  ⚠️ Deadline (-30)
+                </button>
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleDirectAdjust} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Student Dropdown */}
+              {/* User Dropdown */}
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Select Voice Artist / Student
+                  {pointsRecipientType === 'staff'
+                    ? 'Select Staff Member / Casting Director'
+                    : 'Select Voice Artist / Student'}
                 </label>
                 <select
                   required
@@ -577,10 +678,14 @@ export const AdminOverview: React.FC = () => {
                   onChange={(e) => setAdjustStudentId(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-lime-sprout font-medium"
                 >
-                  <option value="">-- Choose registered student --</option>
-                  {artists.map((a) => (
+                  <option value="">
+                    {pointsRecipientType === 'staff'
+                      ? '-- Choose academy staff member --'
+                      : '-- Choose registered student --'}
+                  </option>
+                  {(pointsRecipientType === 'staff' ? staffList : artists).map((a) => (
                     <option key={a.userId} value={a.userId}>
-                      {a.displayName} {a.email ? `(${a.email})` : ''} — Tier {a.currentRank} • {a.rankPoints.toLocaleString()} PTS
+                      {a.displayName} {a.email ? `(${a.email})` : ''} — Tier {a.currentRank} • {a.rankPoints.toLocaleString()} PTS {a.roles ? `[${a.roles.join(', ')}]` : ''}
                     </option>
                   ))}
                 </select>
@@ -611,14 +716,19 @@ export const AdminOverview: React.FC = () => {
               </div>
             </div>
 
-            {/* Selected Artist Live Preview */}
+            {/* Selected Target Live Preview */}
             {selectedArtist && (
               <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2">
                   <UserCheck size={16} className="text-lime-sprout" />
-                  <span className="text-slate-300">Target Artist:</span>
+                  <span className="text-slate-300">Target {pointsRecipientType === 'staff' ? 'Staff' : 'Artist'}:</span>
                   <strong className="text-white">{selectedArtist.displayName}</strong>
                   <span className="text-slate-400 font-mono">({selectedArtist.email})</span>
+                  {selectedArtist.roles && (
+                    <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-mono">
+                      {selectedArtist.roles.join(', ')}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3 font-mono">
@@ -645,16 +755,29 @@ export const AdminOverview: React.FC = () => {
                   onChange={(e) => setAdjustCategory(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-lime-sprout"
                 >
-                  <option value="training">Training Session (+50)</option>
-                  <option value="audition">Audition Submitted (+20)</option>
-                  <option value="role_approved">Role Approved (+100)</option>
-                  <option value="scene_mastery">Scene Mastery (+100)</option>
-                  <option value="consistency">Consistency Milestone (+200)</option>
-                  <option value="deduction_pronunciation">Pronunciation Deduction (-10)</option>
-                  <option value="deduction_lipsync">Lip Sync Deduction (-20)</option>
-                  <option value="deduction_audio">Audio Quality Deduction (-25)</option>
-                  <option value="deduction_deadline">Missed Deadline (-30)</option>
-                  <option value="admin_adjustment">Custom Administrative Adjustment</option>
+                  {pointsRecipientType === 'staff' ? (
+                    <>
+                      <option value="evaluation">Audition Evaluation & Scoring</option>
+                      <option value="casting">Talent Casting & Role Selection</option>
+                      <option value="quality_control">Script & Audio QC Audit</option>
+                      <option value="mentorship">Workshop & Student Mentorship</option>
+                      <option value="governance">Executive Administrative Merit</option>
+                      <option value="admin_adjustment">Custom Staff Adjustment</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="training">Training Session (+50)</option>
+                      <option value="audition">Audition Submitted (+20)</option>
+                      <option value="role_approved">Role Approved (+100)</option>
+                      <option value="scene_mastery">Scene Mastery (+100)</option>
+                      <option value="consistency">Consistency Milestone (+200)</option>
+                      <option value="deduction_pronunciation">Pronunciation Deduction (-10)</option>
+                      <option value="deduction_lipsync">Lip Sync Deduction (-20)</option>
+                      <option value="deduction_audio">Audio Quality Deduction (-25)</option>
+                      <option value="deduction_deadline">Missed Deadline (-30)</option>
+                      <option value="admin_adjustment">Custom Administrative Adjustment</option>
+                    </>
+                  )}
                 </select>
               </div>
 
