@@ -10,7 +10,14 @@ import {
   SlidersHorizontal,
   ChevronDown,
   Mic2,
-  Zap
+  Zap,
+  ShieldCheck,
+  ClipboardList,
+  Users,
+  CheckSquare,
+  FileCheck2,
+  Scale,
+  BookOpen
 } from 'lucide-react';
 import { Role } from '@pdi/shared';
 
@@ -20,6 +27,9 @@ export const Navbar: React.FC = () => {
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isAdmin = Boolean(user && (user.roles.includes('admin') || user.roles.includes('superadmin')));
+  const isDirector = Boolean(user && (user.roles.includes('director') || isAdmin));
 
   const handleLogout = async () => {
     await logout();
@@ -76,8 +86,96 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-5">
-            {user && activeRole === 'student' ? (
+          <nav className="hidden md:flex items-center gap-4 lg:gap-5">
+            {isAdmin ? (
+              <>
+                <Link
+                  to="/admin"
+                  className={`text-sm font-medium transition-colors hover:text-white flex items-center gap-1.5 ${
+                    isCurrent('/admin') ? 'text-lime-sprout font-bold' : 'text-slate-300 hover:text-lime-sprout'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4 text-lime-sprout" />
+                  <span>Admin Panel</span>
+                </Link>
+                <Link
+                  to="/director"
+                  className={`text-sm font-medium transition-colors hover:text-white flex items-center gap-1.5 ${
+                    isCurrent('/director') ? 'text-lime-sprout font-bold' : 'text-slate-300 hover:text-lime-sprout'
+                  }`}
+                >
+                  <ClipboardList className="w-4 h-4 text-lime-sprout" />
+                  <span>Director Queue</span>
+                </Link>
+                <Link
+                  to="/director/casting-board"
+                  className={`text-sm font-medium transition-colors hover:text-white flex items-center gap-1.5 ${
+                    isCurrent('/director/casting-board') ? 'text-lime-sprout font-bold' : 'text-slate-300 hover:text-lime-sprout'
+                  }`}
+                >
+                  <Users className="w-4 h-4 text-lime-sprout" />
+                  <span>Casting Queue</span>
+                </Link>
+                <Link
+                  to="/admin/approvals"
+                  className={`text-sm font-medium transition-colors hover:text-white flex items-center gap-1.5 ${
+                    isCurrent('/admin/approvals') ? 'text-lime-sprout font-bold' : 'text-slate-300 hover:text-lime-sprout'
+                  }`}
+                >
+                  <CheckSquare className="w-4 h-4 text-lime-sprout" />
+                  <span>Approvals</span>
+                </Link>
+                <Link
+                  to="/student/studio"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isCurrent('/student/studio')
+                      ? 'bg-lime-sprout text-slate-950 shadow-md shadow-lime-sprout/20'
+                      : 'bg-fresh-canopy/80 text-lime-sprout border border-lime-sprout/40 hover:bg-lime-sprout hover:text-slate-950'
+                  }`}
+                >
+                  <Mic2 className="w-3.5 h-3.5" /> Studio
+                </Link>
+              </>
+            ) : isDirector ? (
+              <>
+                <Link
+                  to="/director"
+                  className={`text-sm font-medium transition-colors hover:text-white flex items-center gap-1.5 ${
+                    isCurrent('/director') ? 'text-sky-400 font-bold' : 'text-slate-300 hover:text-sky-300'
+                  }`}
+                >
+                  <ClipboardList className="w-4 h-4 text-sky-400" />
+                  <span>Director Queue</span>
+                </Link>
+                <Link
+                  to="/director/casting-board"
+                  className={`text-sm font-medium transition-colors hover:text-white flex items-center gap-1.5 ${
+                    isCurrent('/director/casting-board') ? 'text-sky-400 font-bold' : 'text-slate-300 hover:text-sky-300'
+                  }`}
+                >
+                  <Users className="w-4 h-4 text-sky-400" />
+                  <span>Casting Queue</span>
+                </Link>
+                <Link
+                  to="/student/studio"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isCurrent('/student/studio')
+                      ? 'bg-sky-400 text-slate-950 shadow-md shadow-sky-400/20'
+                      : 'bg-sky-950/80 text-sky-300 border border-sky-400/40 hover:bg-sky-400 hover:text-slate-950'
+                  }`}
+                >
+                  <Mic2 className="w-3.5 h-3.5" /> Studio
+                </Link>
+                <Link
+                  to="/rules"
+                  className={`text-sm font-medium transition-colors hover:text-white ${
+                    isCurrent('/rules') ? 'text-sky-400 font-bold' : 'text-slate-300'
+                  }`}
+                >
+                  Rules
+                </Link>
+              </>
+            ) : user ? (
               <>
                 <Link
                   to="/student"
@@ -86,14 +184,6 @@ export const Navbar: React.FC = () => {
                   }`}
                 >
                   Home
-                </Link>
-                <Link
-                  to="/student/auditions"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/student/auditions') ? 'text-cyber-lime font-bold' : 'text-slate-300'
-                  }`}
-                >
-                  Auditions
                 </Link>
                 <Link
                   to="/student/studio"
@@ -106,12 +196,12 @@ export const Navbar: React.FC = () => {
                   <Mic2 className="w-3.5 h-3.5" /> Dubbing Studio
                 </Link>
                 <Link
-                  to="/leaderboard"
+                  to="/student/submissions"
                   className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/leaderboard') ? 'text-cyber-lime font-bold' : 'text-slate-300'
+                    isCurrent('/student/submissions') ? 'text-cyber-lime font-bold' : 'text-slate-300'
                   }`}
                 >
-                  Leaderboard
+                  My Takes
                 </Link>
                 <Link
                   to="/rules"
@@ -122,101 +212,15 @@ export const Navbar: React.FC = () => {
                   Rules
                 </Link>
               </>
-            ) : user && activeRole === 'director' ? (
-              <>
-                <Link
-                  to="/director"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/director') ? 'text-sky-400 font-bold' : 'text-slate-300'
-                  }`}
-                >
-                  Review Queue
-                </Link>
-                <Link
-                  to="/director/casting-board"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/director/casting-board') ? 'text-sky-400 font-bold' : 'text-slate-300'
-                  }`}
-                >
-                  Talent Board
-                </Link>
-                <Link
-                  to="/student/studio"
-                  className="px-3 py-1 rounded-lg text-xs font-bold bg-sky-950/80 text-sky-300 border border-sky-400/40 hover:bg-sky-400 hover:text-slate-950 transition-all flex items-center gap-1.5"
-                >
-                  <Mic2 className="w-3.5 h-3.5" /> Studio
-                </Link>
-                <Link
-                  to="/challenges"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/challenges') ? 'text-sky-400 font-bold' : 'text-slate-300'
-                  }`}
-                >
-                  Auditions
-                </Link>
-              </>
-            ) : user && activeRole === 'admin' ? (
-              <>
-                <Link
-                  to="/admin"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/admin') ? 'text-lime-sprout font-bold' : 'text-slate-300'
-                  }`}
-                >
-                  Admin Hub
-                </Link>
-                <Link
-                  to="/admin/approvals"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/admin/approvals') ? 'text-lime-sprout font-bold' : 'text-slate-300'
-                  }`}
-                >
-                  Approvals
-                </Link>
-                <Link
-                  to="/director"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/director') ? 'text-lime-sprout font-bold' : 'text-slate-300'
-                  }`}
-                >
-                  Review Queue
-                </Link>
-                <Link
-                  to="/leaderboard"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/leaderboard') ? 'text-lime-sprout font-bold' : 'text-slate-300'
-                  }`}
-                >
-                  Leaderboard
-                </Link>
-              </>
             ) : (
-              <>
-                <Link
-                  to="/rules"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/rules') ? 'text-cyber-lime' : 'text-slate-300'
-                  }`}
-                >
-                  Rules & Rubric
-                </Link>
-                <Link
-                  to="/challenges"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/challenges') ? 'text-cyber-lime' : 'text-slate-300'
-                  }`}
-                >
-                  Audition Challenges
-                </Link>
-                <Link
-                  to="/leaderboard"
-                  className={`text-sm font-medium transition-colors hover:text-white ${
-                    isCurrent('/leaderboard') ? 'text-cyber-lime' : 'text-slate-300'
-                  }`}
-                >
-                  Leaderboard
-                </Link>
-              </>
+              <Link
+                to="/rules"
+                className={`text-sm font-medium transition-colors hover:text-white ${
+                  isCurrent('/rules') ? 'text-cyber-lime font-bold' : 'text-slate-300'
+                }`}
+              >
+                Rules & Rubric
+              </Link>
             )}
           </nav>
 
@@ -340,36 +344,145 @@ export const Navbar: React.FC = () => {
           )}
 
           <div className="grid grid-cols-2 gap-2 text-xs font-medium">
-            <Link
-              to="/rules"
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700"
-            >
-              📜 Rules & Rubrics
-            </Link>
-            <Link
-              to="/leaderboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700"
-            >
-              🏆 Global Leaderboard
-            </Link>
-            {user && (
+            {isAdmin ? (
+              <>
+                <Link
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-fresh-canopy/30 border border-lime-sprout/40 text-lime-sprout font-bold hover:bg-fresh-canopy/50 flex items-center gap-1.5"
+                >
+                  <ShieldCheck className="w-4 h-4 text-lime-sprout shrink-0" />
+                  <span>Admin Panel</span>
+                </Link>
+                <Link
+                  to="/director"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-fresh-canopy/20 border border-lime-sprout/30 text-lime-sprout hover:bg-fresh-canopy/40 flex items-center gap-1.5"
+                >
+                  <ClipboardList className="w-4 h-4 text-lime-sprout shrink-0" />
+                  <span>Director Queue</span>
+                </Link>
+                <Link
+                  to="/director/casting-board"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-fresh-canopy/20 border border-lime-sprout/30 text-lime-sprout hover:bg-fresh-canopy/40 flex items-center gap-1.5"
+                >
+                  <Users className="w-4 h-4 text-lime-sprout shrink-0" />
+                  <span>Casting Queue</span>
+                </Link>
+                <Link
+                  to="/admin/approvals"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-fresh-canopy/20 border border-lime-sprout/30 text-lime-sprout hover:bg-fresh-canopy/40 flex items-center gap-1.5"
+                >
+                  <CheckSquare className="w-4 h-4 text-lime-sprout shrink-0" />
+                  <span>Approvals</span>
+                </Link>
+                <Link
+                  to="/student/studio"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex items-center gap-1.5"
+                >
+                  <Mic2 className="w-4 h-4 text-lime-sprout shrink-0" />
+                  <span>Studio</span>
+                </Link>
+                <Link
+                  to="/rules"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex items-center gap-1.5"
+                >
+                  <BookOpen className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span>Rules</span>
+                </Link>
+              </>
+            ) : isDirector ? (
+              <>
+                <Link
+                  to="/director"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-sky-950/40 border border-sky-400/40 text-sky-300 font-bold hover:bg-sky-950/60 flex items-center gap-1.5"
+                >
+                  <ClipboardList className="w-4 h-4 text-sky-400 shrink-0" />
+                  <span>Director Queue</span>
+                </Link>
+                <Link
+                  to="/director/casting-board"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-sky-950/30 border border-sky-400/30 text-sky-300 hover:bg-sky-950/50 flex items-center gap-1.5"
+                >
+                  <Users className="w-4 h-4 text-sky-400 shrink-0" />
+                  <span>Casting Queue</span>
+                </Link>
+                <Link
+                  to="/student/studio"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex items-center gap-1.5"
+                >
+                  <Mic2 className="w-4 h-4 text-sky-400 shrink-0" />
+                  <span>Studio</span>
+                </Link>
+                <Link
+                  to="/rules"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex items-center gap-1.5"
+                >
+                  <BookOpen className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span>Rules</span>
+                </Link>
+              </>
+            ) : user ? (
+              <>
+                <Link
+                  to="/student"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
+                >
+                  🏠 Student Dashboard
+                </Link>
+                <Link
+                  to="/student/studio"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-cyber-lime/10 border border-cyber-lime/40 text-cyber-lime font-bold hover:bg-cyber-lime/20 flex items-center gap-1.5"
+                >
+                  <Mic2 className="w-4 h-4 text-cyber-lime shrink-0" />
+                  <span>Dubbing Studio</span>
+                </Link>
+                <Link
+                  to="/student/submissions"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
+                >
+                  🎙️ My Takes & Dubs
+                </Link>
+                <Link
+                  to="/student/ledger"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
+                >
+                  ⚖️ Ledger & Appeals
+                </Link>
+                <Link
+                  to="/student/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
+                >
+                  👤 Voice Bio & Setup
+                </Link>
+                <Link
+                  to="/rules"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
+                >
+                  📜 Rules & Rubrics
+                </Link>
+              </>
+            ) : (
               <Link
-                to="/student/ledger"
+                to="/rules"
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700"
+                className="col-span-2 p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-center"
               >
-                ⚖️ Ledger & Appeals
-              </Link>
-            )}
-            {user && (
-              <Link
-                to="/student/profile"
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700"
-              >
-                👤 Voice Bio & Setup
+                📜 Rules & Scoring Rubrics
               </Link>
             )}
           </div>

@@ -33,7 +33,7 @@ export const BottomNav: React.FC = () => {
       { label: 'Home', path: '/student', icon: Home },
       { label: 'Auditions', path: '/student/auditions', icon: Sparkles },
       { label: 'Studio', path: '/student/studio', icon: Mic2, isHero: true },
-      { label: 'My Takes', path: '/student/submissions', icon: FileCheck2 },
+      { label: 'Leaderboard', path: '/leaderboard', icon: Trophy },
       { label: 'Profile', path: '/student/profile', icon: User },
     ];
 
