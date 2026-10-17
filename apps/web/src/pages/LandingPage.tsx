@@ -130,7 +130,7 @@ export const LandingPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {(Object.keys(RANK_TIERS) as Array<keyof typeof RANK_TIERS>).map((tierKey) => {
             const tier = RANK_TIERS[tierKey];
-            const maxDisplay = tier.maxPoints === Number.MAX_SAFE_INTEGER ? '25,000+' : `${tier.maxPoints.toLocaleString()}`;
+            const maxDisplay = tier.maxPoints === Number.MAX_SAFE_INTEGER ? '50,000+' : `${tier.maxPoints.toLocaleString()}`;
             return (
               <div
                 key={tier.tier}

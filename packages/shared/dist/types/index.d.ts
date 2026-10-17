@@ -277,6 +277,8 @@ export interface MilestoneBadge {
 export interface AdminUserRecord extends UserSummary {
     currentRank: RankTier;
     rankPoints: number;
+    profileType?: ProfileType;
+    staffDesignation?: string | null;
 }
 export interface AdminUserListResponse {
     users: AdminUserRecord[];

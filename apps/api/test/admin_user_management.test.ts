@@ -210,4 +210,31 @@ describe('Phase 8: Admin User Management, Search & Deletion API', () => {
     expect(loginRes.status).toBe(200);
     expect(loginRes.body.data.token).toBeDefined();
   });
+
+  it('allows Admin to promote a student to Staff with a Mentor/Manager designation and starting points', async () => {
+    const res = await request(app)
+      .patch(`/api/v1/admin/users/${studentUser._id}/role`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        role: 'director',
+        staffDesignation: 'Senior Dubbing Mentor',
+        initialPoints: 4500,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.roles).toContain('director');
+    expect(res.body.data.profileType).toBe('staff');
+    expect(res.body.data.staffDesignation).toBe('Senior Dubbing Mentor');
+    expect(res.body.data.rankPoints).toBe(4500);
+
+    // Verify updated in database
+    const updatedUser = await User.findById(studentUser._id);
+    expect(updatedUser?.roles).toContain('director');
+
+    const updatedProfile = await ArtistProfile.findOne({ userId: studentUser._id });
+    expect(updatedProfile?.profileType).toBe('staff');
+    expect(updatedProfile?.staffDesignation).toBe('Senior Dubbing Mentor');
+    expect(updatedProfile?.publicOptIn).toBe(false);
+  });
 });

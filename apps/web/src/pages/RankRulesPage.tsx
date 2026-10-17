@@ -167,7 +167,7 @@ export const RankRulesPage: React.FC = () => {
             <div>
               <span className="font-semibold text-amber-300 text-sm">Example Boundary Scenario:</span>
               <p className="mt-1 text-slate-300">
-                A student has 5,040 points (Rank B, where Rank B requires 5,000–11,999 pts). If an approved deduction of -100 points is processed, the balance becomes 4,940 points. The student is immediately demoted to Rank C (Developing Artist).
+                A student has 12,040 points (Rank B, where Rank B requires 12,000–24,999 pts). If an approved deduction of -100 points is processed, the balance becomes 11,940 points. The student is immediately demoted to Rank C (Developing Artist).
               </p>
             </div>
           </div>

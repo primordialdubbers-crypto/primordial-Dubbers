@@ -393,10 +393,10 @@ export const CastingBoardPage: React.FC = () => {
               className="bg-slate-900 border border-slate-700 text-xs text-white rounded px-2 py-1 focus:outline-none focus:border-sky-500"
             >
               <option value="0">Any (0+)</option>
-              <option value="1000">1,000+ (C Rank)</option>
-              <option value="5000">5,000+ (B Rank)</option>
-              <option value="12000">12,000+ (A Rank)</option>
-              <option value="25000">25,000+ (S Rank)</option>
+              <option value="5000">5,000+ (C Rank)</option>
+              <option value="12000">12,000+ (B Rank)</option>
+              <option value="25000">25,000+ (A Rank)</option>
+              <option value="50000">50,000+ (S Rank)</option>
             </select>
           </div>
         </div>

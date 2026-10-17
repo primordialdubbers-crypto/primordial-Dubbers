@@ -8,7 +8,7 @@ export interface RankDefinition {
     colorHex: string;
 }
 export declare const RANK_TIERS: Record<RankTier, RankDefinition>;
-export declare const S_RANK_DISPLAY_MILESTONE = 50000;
+export declare const S_RANK_DISPLAY_MILESTONE = 100000;
 export interface StaffRankDefinition {
     tier: RankTier;
     designation: string;

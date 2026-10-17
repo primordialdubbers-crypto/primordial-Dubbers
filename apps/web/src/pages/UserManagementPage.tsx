@@ -17,6 +17,8 @@ import {
   ChevronRight,
   ShieldCheck,
   KeyRound,
+  UserCog,
+  Award,
 } from 'lucide-react';
 
 export const UserManagementPage: React.FC = () => {
@@ -39,6 +41,14 @@ export const UserManagementPage: React.FC = () => {
   const [userToResetPassword, setUserToResetPassword] = useState<AdminUserRecord | null>(null);
   const [adminNewPassword, setAdminNewPassword] = useState<string>('');
   const [isResettingPassword, setIsResettingPassword] = useState<boolean>(false);
+
+  // Role & Staff Promotion Modal State
+  const [userToEditRole, setUserToEditRole] = useState<AdminUserRecord | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'student' | 'director' | 'admin'>('director');
+  const [selectedDesignation, setSelectedDesignation] = useState<string>('Dubbing Mentor');
+  const [customDesignation, setCustomDesignation] = useState<string>('');
+  const [initialStaffPoints, setInitialStaffPoints] = useState<number>(2500);
+  const [isUpdatingRole, setIsUpdatingRole] = useState<boolean>(false);
 
   // Status Update State
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
@@ -188,6 +198,66 @@ export const UserManagementPage: React.FC = () => {
       });
     } finally {
       setIsResettingPassword(false);
+    }
+  };
+
+  const openRoleModal = (targetUser: AdminUserRecord) => {
+    setUserToEditRole(targetUser);
+    const isTargetAdmin = targetUser.roles.includes('admin') || targetUser.roles.includes('superadmin');
+    const isTargetDirector = targetUser.roles.includes('director');
+    if (isTargetAdmin) {
+      setSelectedRole('admin');
+      setSelectedDesignation(targetUser.staffDesignation || 'Lead Executive Director');
+    } else if (isTargetDirector) {
+      setSelectedRole('director');
+      setSelectedDesignation(targetUser.staffDesignation || 'Dubbing Mentor');
+    } else {
+      setSelectedRole('director'); // default suggest promoting to director/mentor
+      setSelectedDesignation('Dubbing Mentor');
+    }
+    setCustomDesignation('');
+    setInitialStaffPoints(targetUser.rankPoints > 0 ? targetUser.rankPoints : 2500);
+  };
+
+  const handleUpdateRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userToEditRole) return;
+    setIsUpdatingRole(true);
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const designation = selectedDesignation === 'custom' ? customDesignation.trim() : selectedDesignation;
+
+      const res = await fetch(`/api/v1/admin/users/${userToEditRole.id}/role`, {
+        method: 'PATCH',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          role: selectedRole,
+          staffDesignation: selectedRole === 'student' ? null : (designation || 'Staff Member'),
+          initialPoints: selectedRole === 'student' ? undefined : initialStaffPoints,
+        }),
+      });
+
+      const body = await res.json();
+      if (!res.ok) {
+        throw new Error(body.message || 'Failed to update user role');
+      }
+
+      setFeedback({
+        type: 'success',
+        message: body.message || `Role for "${userToEditRole.displayName}" updated successfully.`,
+      });
+      setUserToEditRole(null);
+      fetchUsers();
+    } catch (err: any) {
+      setFeedback({
+        type: 'error',
+        message: err.message || 'Error occurred while updating user role.',
+      });
+    } finally {
+      setIsUpdatingRole(false);
     }
   };
 
@@ -369,21 +439,28 @@ export const UserManagementPage: React.FC = () => {
 
                       {/* Roles */}
                       <td className="py-3.5 px-4">
-                        <div className="flex flex-wrap gap-1">
-                          {u.roles.map((r) => (
-                            <span
-                              key={r}
-                              className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold border ${
-                                r === 'admin' || r === 'superadmin'
-                                  ? 'bg-fresh-canopy text-lime-sprout border-lime-sprout/40'
-                                  : r === 'director'
-                                  ? 'bg-sky-950 text-sky-300 border-sky-500/40'
-                                  : 'bg-charcoal-violet text-cyber-lime border-cyber-lime/40'
-                              }`}
-                            >
-                              {r}
+                        <div className="flex flex-col gap-1 items-start">
+                          <div className="flex flex-wrap gap-1">
+                            {u.roles.map((r) => (
+                              <span
+                                key={r}
+                                className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold border ${
+                                  r === 'admin' || r === 'superadmin'
+                                    ? 'bg-fresh-canopy text-lime-sprout border-lime-sprout/40'
+                                    : r === 'director'
+                                    ? 'bg-sky-950 text-sky-300 border-sky-500/40'
+                                    : 'bg-charcoal-violet text-cyber-lime border-cyber-lime/40'
+                                }`}
+                              >
+                                {r}
+                              </span>
+                            ))}
+                          </div>
+                          {u.staffDesignation && (
+                            <span className="text-[10px] font-mono text-amber-300 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-800/60">
+                              {u.staffDesignation}
                             </span>
-                          ))}
+                          )}
                         </div>
                       </td>
 
@@ -423,6 +500,15 @@ export const UserManagementPage: React.FC = () => {
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {/* Manage Staff Role & Designation Button */}
+                          <button
+                            onClick={() => openRoleModal(u)}
+                            className="p-1.5 rounded-lg border border-sky-800/60 bg-sky-950/40 text-sky-300 hover:bg-sky-900/60 transition-colors"
+                            title="Manage Staff Role & Designation (Mentor, Director, Admin)"
+                          >
+                            <UserCog size={14} />
+                          </button>
+
                           {/* Reset Password Button */}
                           <button
                             onClick={() => {
@@ -660,6 +746,192 @@ export const UserManagementPage: React.FC = () => {
                     <>
                       <KeyRound size={14} />
                       <span>Update Password</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Role & Staff Designation Modal */}
+      {userToEditRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-sky-500/40 bg-pdi-surface p-6 shadow-2xl space-y-5 relative">
+            <button
+              onClick={() => setUserToEditRole(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-3 text-sky-400">
+              <div className="w-10 h-10 rounded-full bg-sky-950 border border-sky-800 flex items-center justify-center">
+                <UserCog size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white font-heading">
+                  Staff Role & Clearance
+                </h3>
+                <span className="text-xs text-sky-400 font-mono">Assign Mentor, Director, or Admin</span>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+              <p className="text-sm font-bold text-white">{userToEditRole.displayName}</p>
+              <p className="text-xs font-mono text-slate-400">{userToEditRole.email}</p>
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-[11px] font-mono text-slate-400">Current Role:</span>
+                <span className="text-xs font-mono uppercase font-bold text-cyber-lime">
+                  {userToEditRole.roles.join(', ')}
+                </span>
+                {userToEditRole.staffDesignation && (
+                  <span className="text-[10px] font-mono bg-amber-950/60 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800">
+                    {userToEditRole.staffDesignation}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <form onSubmit={handleUpdateRole} className="space-y-4">
+              {/* Role Selector */}
+              <div>
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1.5">
+                  Account Clearance / Role
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedRole('director');
+                      if (selectedDesignation === 'Lead Executive Director') setSelectedDesignation('Dubbing Mentor');
+                    }}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold font-heading border transition-all ${
+                      selectedRole === 'director'
+                        ? 'bg-sky-500 text-black border-sky-400 shadow-md shadow-sky-500/20'
+                        : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-600'
+                    }`}
+                  >
+                    Director / Staff
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedRole('admin');
+                      setSelectedDesignation('Lead Executive Director');
+                    }}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold font-heading border transition-all ${
+                      selectedRole === 'admin'
+                        ? 'bg-lime-sprout text-black border-lime-sprout shadow-md shadow-lime-sprout/20'
+                        : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-600'
+                    }`}
+                  >
+                    Admin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedRole('student');
+                    }}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold font-heading border transition-all ${
+                      selectedRole === 'student'
+                        ? 'bg-cyber-lime text-black border-cyber-lime shadow-md shadow-cyber-lime/20'
+                        : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-600'
+                    }`}
+                  >
+                    Student / Artist
+                  </button>
+                </div>
+              </div>
+
+              {/* Designation Selector (for Staff/Director/Admin) */}
+              {selectedRole !== 'student' && (
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1">
+                      Staff Title / Designation
+                    </label>
+                    <select
+                      value={selectedDesignation}
+                      onChange={(e) => setSelectedDesignation(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-sky-500"
+                    >
+                      <option value="Dubbing Mentor">🎙️ Dubbing Mentor</option>
+                      <option value="Senior Mentor">🌟 Senior Mentor</option>
+                      <option value="Studio Manager">🎬 Studio Manager</option>
+                      <option value="Production Manager">📋 Production Manager</option>
+                      <option value="Casting Director">👥 Casting Director</option>
+                      <option value="Associate Director">🎯 Associate Director</option>
+                      <option value="Lead Executive Director">👑 Lead Executive Director</option>
+                      <option value="custom">✏️ Custom Designation...</option>
+                    </select>
+                  </div>
+
+                  {selectedDesignation === 'custom' && (
+                    <div>
+                      <input
+                        type="text"
+                        required
+                        value={customDesignation}
+                        onChange={(e) => setCustomDesignation(e.target.value)}
+                        placeholder="e.g. Chief Sound Supervisor"
+                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-sky-500 text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  {/* Starting Staff Points */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1">
+                      Staff Points (Staff Leaderboard Ranking)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={initialStaffPoints}
+                        onChange={(e) => setInitialStaffPoints(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm font-mono text-cyber-lime focus:outline-none focus:border-sky-500"
+                      />
+                      <span className="text-xs font-mono text-slate-400">PTS</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Staff rankings use dedicated staff tiers (Junior Reviewer, Associate, Director, Senior, Lead).
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {selectedRole === 'student' && (
+                <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                  User will be returned to normal Voice Artist status and will appear on the public student leaderboard.
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-pdi-border/60">
+                <button
+                  type="button"
+                  onClick={() => setUserToEditRole(null)}
+                  disabled={isUpdatingRole}
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingRole}
+                  className="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-xs font-bold text-black transition-colors flex items-center gap-1.5 shadow-lg shadow-sky-500/20"
+                >
+                  {isUpdatingRole ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck size={14} />
+                      <span>Save Role & Designation</span>
                     </>
                   )}
                 </button>

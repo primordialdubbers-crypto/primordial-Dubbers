@@ -54,7 +54,7 @@ export class AdminUserController {
 
       const userIds = users.map((u) => u._id);
       const profiles = await ArtistProfile.find({ userId: { $in: userIds } })
-        .select('userId currentRank rankPoints')
+        .select('userId currentRank rankPoints profileType staffDesignation')
         .lean();
 
       const profileMap = new Map(profiles.map((p) => [p.userId.toString(), p]));
@@ -69,6 +69,8 @@ export class AdminUserController {
           status: u.status,
           currentRank: p?.currentRank || 'ED',
           rankPoints: p?.rankPoints ?? 0,
+          profileType: p?.profileType || 'student',
+          staffDesignation: p?.staffDesignation || null,
           createdAt: u.createdAt,
         };
       });
@@ -278,6 +280,117 @@ export class AdminUserController {
         data: {
           userId: targetUser._id.toString(),
           email: targetUser.email,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * PATCH /api/v1/admin/users/:userId/role
+   * Promotes or reassigns a user's role (admin, director, student) and staff designation
+   * (e.g. Mentor, Studio Manager, Casting Director) along with profileType & points.
+   */
+  static async updateUserRole(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { userId } = req.params;
+      const { role, staffDesignation, initialPoints } = req.body;
+      const requester = (req as any).user;
+
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid user ID provided',
+          error: { code: 'INVALID_USER_ID' },
+        });
+      }
+
+      const validRoles = ['student', 'director', 'admin'];
+      if (!role || !validRoles.includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid role is required (student, director, or admin)',
+          error: { code: 'INVALID_ROLE' },
+        });
+      }
+
+      // Root admin cannot demote themselves
+      if (requester && requester._id.toString() === userId && role === 'student') {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot demote your own administrator account to student',
+          error: { code: 'CANNOT_DEMOTE_SELF' },
+        });
+      }
+
+      const targetUser = await User.findById(userId);
+      if (!targetUser) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found in system',
+          error: { code: 'USER_NOT_FOUND' },
+        });
+      }
+
+      // Update User roles
+      if (role === 'admin') {
+        targetUser.roles = ['admin'];
+      } else if (role === 'director') {
+        targetUser.roles = ['director'];
+      } else {
+        targetUser.roles = ['student'];
+      }
+      await targetUser.save();
+
+      // Update or create ArtistProfile
+      let profile = await ArtistProfile.findOne({ userId: targetUser._id });
+      const isStaff = role === 'admin' || role === 'director';
+
+      if (!profile) {
+        profile = new ArtistProfile({
+          userId: targetUser._id,
+          displayName: targetUser.displayName,
+          voiceTypes: isStaff ? [role === 'admin' ? 'Administrator' : 'Staff / Director'] : [],
+          bio: '',
+          publicOptIn: !isStaff,
+          profileType: isStaff ? 'staff' : 'student',
+          staffDesignation: isStaff ? (staffDesignation || (role === 'admin' ? 'Lead Executive Director' : 'Casting Director')) : null,
+          rankPoints: initialPoints !== undefined ? Number(initialPoints) : (role === 'admin' ? 10000 : role === 'director' ? 2500 : 0),
+          currentRank: isStaff ? (role === 'admin' ? 'S' : 'B') : 'ED',
+          performanceAverage: isStaff ? 100 : 0,
+        });
+        await profile.save();
+      } else {
+        profile.profileType = isStaff ? 'staff' : 'student';
+        if (isStaff) {
+          profile.staffDesignation = staffDesignation || profile.staffDesignation || (role === 'admin' ? 'Lead Executive Director' : 'Casting Director');
+          profile.publicOptIn = false;
+          if (initialPoints !== undefined && !isNaN(Number(initialPoints))) {
+            profile.rankPoints = Number(initialPoints);
+          } else if (profile.rankPoints === 0) {
+            profile.rankPoints = role === 'admin' ? 10000 : 2500;
+          }
+          profile.currentRank = role === 'admin' ? 'S' : 'B';
+        } else {
+          profile.staffDesignation = null;
+          profile.publicOptIn = true;
+        }
+        await profile.save();
+      }
+
+      res.status(200).json({
+        success: true,
+        message: `User "${targetUser.displayName}" successfully updated to ${role} (${isStaff ? profile.staffDesignation : 'Voice Artist'}).`,
+        data: {
+          userId: targetUser._id.toString(),
+          displayName: targetUser.displayName,
+          email: targetUser.email,
+          roles: targetUser.roles,
+          profileType: profile.profileType,
+          staffDesignation: profile.staffDesignation,
+          currentRank: profile.currentRank,
+          rankPoints: profile.rankPoints,
         },
       });
     } catch (err) {

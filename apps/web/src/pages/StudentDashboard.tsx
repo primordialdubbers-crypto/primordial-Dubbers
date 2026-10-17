@@ -114,11 +114,11 @@ export const StudentDashboard: React.FC = () => {
 
   // Calculate next rank target
   const getNextRank = () => {
-    if (rank === 'ED') return { next: 'C', target: 1000, needed: 1000 - points };
-    if (rank === 'C') return { next: 'B', target: 5000, needed: 5000 - points };
-    if (rank === 'B') return { next: 'A', target: 12000, needed: 12000 - points };
-    if (rank === 'A') return { next: 'S', target: 25000, needed: 25000 - points };
-    return { next: 'S (Elite)', target: 50000, needed: Math.max(0, 50000 - points) };
+    if (rank === 'ED') return { next: 'C', target: 5000, needed: 5000 - points };
+    if (rank === 'C') return { next: 'B', target: 12000, needed: 12000 - points };
+    if (rank === 'B') return { next: 'A', target: 25000, needed: 25000 - points };
+    if (rank === 'A') return { next: 'S', target: 50000, needed: 50000 - points };
+    return { next: 'S (Elite)', target: 100000, needed: Math.max(0, 100000 - points) };
   };
 
   const nextInfo = getNextRank();
