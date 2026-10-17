@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { RankBadge } from '../components/RankBadge';
 import { AdminUserRecord, calculateRankFromPoints, STAFF_RANK_TIERS } from '@pdi/shared';
 import {
   Users,
