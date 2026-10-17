@@ -44,7 +44,7 @@ export const UserManagementPage: React.FC = () => {
 
   // Role & Staff Promotion Modal State
   const [userToEditRole, setUserToEditRole] = useState<AdminUserRecord | null>(null);
-  const [selectedRole, setSelectedRole] = useState<'student' | 'director' | 'admin'>('director');
+  const [selectedRole, setSelectedRole] = useState<'student' | 'director' | 'admin' | 'superadmin'>('director');
   const [selectedDesignation, setSelectedDesignation] = useState<string>('Dubbing Mentor');
   const [customDesignation, setCustomDesignation] = useState<string>('');
   const [initialStaffPoints, setInitialStaffPoints] = useState<number>(2500);
@@ -203,9 +203,13 @@ export const UserManagementPage: React.FC = () => {
 
   const openRoleModal = (targetUser: AdminUserRecord) => {
     setUserToEditRole(targetUser);
-    const isTargetAdmin = targetUser.roles.includes('admin') || targetUser.roles.includes('superadmin');
+    const isTargetSuperAdmin = targetUser.roles.includes('superadmin');
+    const isTargetAdmin = targetUser.roles.includes('admin');
     const isTargetDirector = targetUser.roles.includes('director');
-    if (isTargetAdmin) {
+    if (isTargetSuperAdmin) {
+      setSelectedRole('superadmin');
+      setSelectedDesignation(targetUser.staffDesignation || 'System Root Superadmin');
+    } else if (isTargetAdmin) {
       setSelectedRole('admin');
       setSelectedDesignation(targetUser.staffDesignation || 'Lead Executive Director');
     } else if (isTargetDirector) {
@@ -799,14 +803,16 @@ export const UserManagementPage: React.FC = () => {
                 <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1.5">
                   Account Clearance / Role
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedRole('director');
-                      if (selectedDesignation === 'Lead Executive Director') setSelectedDesignation('Dubbing Mentor');
+                      if (selectedDesignation === 'Lead Executive Director' || selectedDesignation === 'System Root Superadmin') {
+                        setSelectedDesignation('Dubbing Mentor');
+                      }
                     }}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold font-heading border transition-all ${
+                    className={`py-2 px-2.5 rounded-xl text-xs font-bold font-heading border transition-all text-center ${
                       selectedRole === 'director'
                         ? 'bg-sky-500 text-black border-sky-400 shadow-md shadow-sky-500/20'
                         : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-600'
@@ -820,7 +826,7 @@ export const UserManagementPage: React.FC = () => {
                       setSelectedRole('admin');
                       setSelectedDesignation('Lead Executive Director');
                     }}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold font-heading border transition-all ${
+                    className={`py-2 px-2.5 rounded-xl text-xs font-bold font-heading border transition-all text-center ${
                       selectedRole === 'admin'
                         ? 'bg-lime-sprout text-black border-lime-sprout shadow-md shadow-lime-sprout/20'
                         : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-600'
@@ -831,15 +837,29 @@ export const UserManagementPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => {
+                      setSelectedRole('superadmin');
+                      setSelectedDesignation('System Root Superadmin');
+                    }}
+                    className={`py-2 px-2.5 rounded-xl text-xs font-bold font-heading border transition-all text-center ${
+                      selectedRole === 'superadmin'
+                        ? 'bg-amber-400 text-black border-amber-300 shadow-md shadow-amber-400/20'
+                        : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-600'
+                    }`}
+                  >
+                    Superadmin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
                       setSelectedRole('student');
                     }}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold font-heading border transition-all ${
+                    className={`py-2 px-2.5 rounded-xl text-xs font-bold font-heading border transition-all text-center ${
                       selectedRole === 'student'
                         ? 'bg-cyber-lime text-black border-cyber-lime shadow-md shadow-cyber-lime/20'
                         : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-600'
                     }`}
                   >
-                    Student / Artist
+                    Student
                   </button>
                 </div>
               </div>

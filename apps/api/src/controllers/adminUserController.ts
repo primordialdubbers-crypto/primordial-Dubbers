@@ -306,16 +306,16 @@ export class AdminUserController {
         });
       }
 
-      const validRoles = ['student', 'director', 'admin'];
+      const validRoles = ['student', 'director', 'admin', 'superadmin'];
       if (!role || !validRoles.includes(role)) {
         return res.status(400).json({
           success: false,
-          message: 'Valid role is required (student, director, or admin)',
+          message: 'Valid role is required (student, director, admin, or superadmin)',
           error: { code: 'INVALID_ROLE' },
         });
       }
 
-      // Root admin cannot demote themselves
+      // Root admin cannot demote themselves to student
       if (requester && requester._id.toString() === userId && role === 'student') {
         return res.status(400).json({
           success: false,
@@ -334,7 +334,9 @@ export class AdminUserController {
       }
 
       // Update User roles
-      if (role === 'admin') {
+      if (role === 'superadmin') {
+        targetUser.roles = ['admin', 'superadmin'];
+      } else if (role === 'admin') {
         targetUser.roles = ['admin'];
       } else if (role === 'director') {
         targetUser.roles = ['director'];
@@ -345,33 +347,33 @@ export class AdminUserController {
 
       // Update or create ArtistProfile
       let profile = await ArtistProfile.findOne({ userId: targetUser._id });
-      const isStaff = role === 'admin' || role === 'director';
+      const isStaff = role === 'admin' || role === 'superadmin' || role === 'director';
 
       if (!profile) {
         profile = new ArtistProfile({
           userId: targetUser._id,
           displayName: targetUser.displayName,
-          voiceTypes: isStaff ? [role === 'admin' ? 'Administrator' : 'Staff / Director'] : [],
+          voiceTypes: isStaff ? [role === 'admin' || role === 'superadmin' ? 'Administrator' : 'Staff / Director'] : [],
           bio: '',
           publicOptIn: !isStaff,
           profileType: isStaff ? 'staff' : 'student',
-          staffDesignation: isStaff ? (staffDesignation || (role === 'admin' ? 'Lead Executive Director' : 'Casting Director')) : null,
-          rankPoints: initialPoints !== undefined ? Number(initialPoints) : (role === 'admin' ? 10000 : role === 'director' ? 2500 : 0),
-          currentRank: isStaff ? (role === 'admin' ? 'S' : 'B') : 'ED',
+          staffDesignation: isStaff ? (staffDesignation || (role === 'admin' || role === 'superadmin' ? 'Lead Executive Director' : 'Casting Director')) : null,
+          rankPoints: initialPoints !== undefined ? Number(initialPoints) : (role === 'admin' || role === 'superadmin' ? 10000 : role === 'director' ? 2500 : 0),
+          currentRank: isStaff ? (role === 'admin' || role === 'superadmin' ? 'S' : 'B') : 'ED',
           performanceAverage: isStaff ? 100 : 0,
         });
         await profile.save();
       } else {
         profile.profileType = isStaff ? 'staff' : 'student';
         if (isStaff) {
-          profile.staffDesignation = staffDesignation || profile.staffDesignation || (role === 'admin' ? 'Lead Executive Director' : 'Casting Director');
+          profile.staffDesignation = staffDesignation || profile.staffDesignation || (role === 'admin' || role === 'superadmin' ? 'Lead Executive Director' : 'Casting Director');
           profile.publicOptIn = false;
           if (initialPoints !== undefined && !isNaN(Number(initialPoints))) {
             profile.rankPoints = Number(initialPoints);
           } else if (profile.rankPoints === 0) {
-            profile.rankPoints = role === 'admin' ? 10000 : 2500;
+            profile.rankPoints = role === 'admin' || role === 'superadmin' ? 10000 : 2500;
           }
-          profile.currentRank = role === 'admin' ? 'S' : 'B';
+          profile.currentRank = role === 'admin' || role === 'superadmin' ? 'S' : 'B';
         } else {
           profile.staffDesignation = null;
           profile.publicOptIn = true;
