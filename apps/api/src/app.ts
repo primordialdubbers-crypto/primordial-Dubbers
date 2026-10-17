@@ -24,6 +24,9 @@ import { RANK_TIERS, AWARDS_CATALOG, DEDUCTIONS_CATALOG } from '@pdi/shared';
 export function createApp() {
   const app = express();
 
+  // Trust proxy headers (e.g. Railway, Cloudflare, Nginx reverse proxies)
+  app.set('trust proxy', 1);
+
   // Security middlewares
   app.use(
     helmet({

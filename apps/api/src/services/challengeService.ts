@@ -88,18 +88,27 @@ export class ChallengeService {
     return {
       challenges: challenges.map((c) => {
         const assignedStudents = Array.isArray(c.assignedStudentIds)
-          ? c.assignedStudentIds.map((s: any) => ({
-              id: s._id ? s._id.toString() : s.toString(),
-              displayName: s.displayName || 'Student Artist',
-              email: s.email || '',
-            }))
+          ? c.assignedStudentIds
+              .filter(Boolean)
+              .map((s: any) => ({
+                id: s._id ? s._id.toString() : s.toString(),
+                displayName: s.displayName || 'Student Artist',
+                email: s.email || '',
+              }))
           : [];
 
         const assignedIds = Array.isArray(c.assignedStudentIds)
-          ? c.assignedStudentIds.map((s: any) => (s._id ? s._id.toString() : s.toString()))
+          ? c.assignedStudentIds
+              .filter(Boolean)
+              .map((s: any) => (s._id ? s._id.toString() : s.toString()))
           : [];
 
         const isAssignedToMe = userId ? assignedIds.includes(userId) : false;
+
+        const creator = c.createdBy as any;
+        const createdById = creator?._id
+          ? creator._id.toString()
+          : (creator ? creator.toString() : null);
 
         return {
           id: c._id.toString(),
@@ -117,8 +126,8 @@ export class ChallengeService {
           assignedStudents,
           isPersonal: Boolean(c.isPersonal),
           isAssignedToMe,
-          createdBy: (c.createdBy as any)?._id?.toString() || c.createdBy.toString(),
-          creatorName: (c.createdBy as any)?.displayName || 'Staff Director',
+          createdBy: createdById,
+          creatorName: creator?.displayName || 'Staff Director',
           createdAt: c.createdAt.toISOString(),
           updatedAt: c.updatedAt.toISOString(),
         };

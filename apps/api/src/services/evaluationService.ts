@@ -174,12 +174,12 @@ export class EvaluationService {
 
     return {
       id: evaluation._id.toString(),
-      submissionId: evaluation.submissionId.toString(),
-      directorId: director?._id ? director._id.toString() : evaluation.directorId.toString(),
+      submissionId: evaluation.submissionId ? evaluation.submissionId.toString() : '',
+      directorId: director?._id ? director._id.toString() : (evaluation.directorId ? evaluation.directorId.toString() : ''),
       directorName: director?.displayName || 'Casting Director',
-      studentId: student?._id ? student._id.toString() : evaluation.studentId.toString(),
+      studentId: student?._id ? student._id.toString() : (evaluation.studentId ? evaluation.studentId.toString() : ''),
       studentName: student?.displayName || 'Student Artist',
-      challengeId: challenge?._id ? challenge._id.toString() : evaluation.challengeId.toString(),
+      challengeId: challenge?._id ? challenge._id.toString() : (evaluation.challengeId ? evaluation.challengeId.toString() : ''),
       challengeTitle: challenge?.title || 'Audition Challenge',
       characterName: challenge?.characterName || 'Character',
       scores: evaluation.scores,
@@ -217,12 +217,19 @@ export class EvaluationService {
       const challenge = sub.challengeId as any;
       const existingEvaluation = evaluationMap.get(sub._id.toString());
 
+      const studentIdStr = student?._id
+        ? student._id.toString()
+        : (sub.studentId ? sub.studentId.toString() : '');
+      const challengeIdStr = challenge?._id
+        ? challenge._id.toString()
+        : (sub.challengeId ? sub.challengeId.toString() : '');
+
       return {
         id: sub._id.toString(),
-        studentId: student?._id ? student._id.toString() : sub.studentId.toString(),
+        studentId: studentIdStr,
         studentName: student?.displayName || 'Student Artist',
         studentEmail: student?.email || '',
-        challengeId: challenge?._id ? challenge._id.toString() : (sub.challengeId ? sub.challengeId.toString() : ''),
+        challengeId: challengeIdStr,
         challengeTitle: challenge?.title || (sub as any).customTitle || 'Custom Dubbing Clip',
         customTitle: (sub as any).customTitle || '',
         characterName: challenge?.characterName || (sub as any).characterName || 'Original Voice',

@@ -28,6 +28,8 @@ const adminUserRoutes_js_1 = __importDefault(require("./routes/adminUserRoutes.j
 const shared_1 = require("@pdi/shared");
 function createApp() {
     const app = (0, express_1.default)();
+    // Trust proxy headers (e.g. Railway, Cloudflare, Nginx reverse proxies)
+    app.set('trust proxy', 1);
     // Security middlewares
     app.use((0, helmet_1.default)({
         contentSecurityPolicy: false, // configure specifically when serving static in prod
