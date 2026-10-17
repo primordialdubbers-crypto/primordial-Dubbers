@@ -14,6 +14,7 @@ import {
   Appeal,
 } from '../models/index.js';
 import { config } from '../config/env.js';
+import { calculateRankFromPoints } from '@pdi/shared';
 
 export class AdminUserController {
   /**
@@ -349,6 +350,12 @@ export class AdminUserController {
       let profile = await ArtistProfile.findOne({ userId: targetUser._id });
       const isStaff = role === 'admin' || role === 'superadmin' || role === 'director';
 
+      const startingPoints = initialPoints !== undefined && !isNaN(Number(initialPoints))
+        ? Math.max(0, Number(initialPoints))
+        : (profile?.rankPoints ?? (role === 'admin' || role === 'superadmin' ? 10000 : role === 'director' ? 2500 : 0));
+
+      const calculatedRank = calculateRankFromPoints(startingPoints);
+
       if (!profile) {
         profile = new ArtistProfile({
           userId: targetUser._id,
@@ -358,8 +365,8 @@ export class AdminUserController {
           publicOptIn: !isStaff,
           profileType: isStaff ? 'staff' : 'student',
           staffDesignation: isStaff ? (staffDesignation || (role === 'admin' || role === 'superadmin' ? 'Lead Executive Director' : 'Casting Director')) : null,
-          rankPoints: initialPoints !== undefined ? Number(initialPoints) : (role === 'admin' || role === 'superadmin' ? 10000 : role === 'director' ? 2500 : 0),
-          currentRank: isStaff ? (role === 'admin' || role === 'superadmin' ? 'S' : 'B') : 'ED',
+          rankPoints: startingPoints,
+          currentRank: calculatedRank,
           performanceAverage: isStaff ? 100 : 0,
         });
         await profile.save();
@@ -369,14 +376,13 @@ export class AdminUserController {
           profile.staffDesignation = staffDesignation || profile.staffDesignation || (role === 'admin' || role === 'superadmin' ? 'Lead Executive Director' : 'Casting Director');
           profile.publicOptIn = false;
           if (initialPoints !== undefined && !isNaN(Number(initialPoints))) {
-            profile.rankPoints = Number(initialPoints);
-          } else if (profile.rankPoints === 0) {
-            profile.rankPoints = role === 'admin' || role === 'superadmin' ? 10000 : 2500;
+            profile.rankPoints = Math.max(0, Number(initialPoints));
           }
-          profile.currentRank = role === 'admin' || role === 'superadmin' ? 'S' : 'B';
+          profile.currentRank = calculateRankFromPoints(profile.rankPoints);
         } else {
           profile.staffDesignation = null;
           profile.publicOptIn = true;
+          profile.currentRank = calculateRankFromPoints(profile.rankPoints);
         }
         await profile.save();
       }

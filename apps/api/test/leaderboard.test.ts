@@ -152,7 +152,8 @@ describe('Leaderboard API (/api/v1/leaderboard)', () => {
     const staffEntry = res.body.data.leaderboard.find((s: any) => s.email === 'director@example.com');
     expect(staffEntry).toBeDefined();
     expect(staffEntry.displayName).toBe('Chief Casting Director');
-    expect(staffEntry.currentRank).toBe('A');
+    // Under Option 1 scale, 6,500 points evaluates to Rank C (5,000 - 11,999)
+    expect(staffEntry.currentRank).toBe('C');
     expect(staffEntry.staffDesignation).toBe('Senior Director');
     expect(staffEntry.rankPoints).toBe(6500);
   });

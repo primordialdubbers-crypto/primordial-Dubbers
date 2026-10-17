@@ -153,7 +153,7 @@ export class PointsService {
         if (profile.profileType === 'staff') {
           const staffRank = calculateStaffRankFromPoints(balanceAfter);
           newRank = staffRank.tier;
-          profile.staffDesignation = staffRank.designation;
+          profile.staffDesignation = profile.staffDesignation || staffRank.designation;
         } else {
           newRank = calculateRankFromPoints(balanceAfter);
         }

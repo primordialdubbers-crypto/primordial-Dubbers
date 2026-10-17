@@ -101,6 +101,7 @@ export async function register(req: Request, res: Response): Promise<void> {
   let artistProfile = null;
   const isStaff = user.roles.some((r) => ['director', 'admin', 'superadmin'].includes(r));
   if (isStaff) {
+    const points = 0; // Fresh staff starts at baseline and earns points
     artistProfile = await ArtistProfile.create({
       userId: user._id,
       displayName: user.displayName,
@@ -109,8 +110,8 @@ export async function register(req: Request, res: Response): Promise<void> {
       publicOptIn: false,
       profileType: 'staff',
       staffDesignation: user.roles.includes('admin') || user.roles.includes('superadmin') ? 'Lead Executive Director' : 'Casting Director',
-      rankPoints: user.roles.includes('director') ? 2500 : 10000,
-      currentRank: user.roles.includes('director') ? 'B' : 'S',
+      rankPoints: points,
+      currentRank: calculateRankFromPoints(points),
       performanceAverage: 100,
     });
   } else {

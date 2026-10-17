@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { RankBadge } from '../components/RankBadge';
-import { AdminUserRecord } from '@pdi/shared';
+import { AdminUserRecord, calculateRankFromPoints, STAFF_RANK_TIERS } from '@pdi/shared';
 import {
   Users,
   Search,
@@ -220,7 +219,7 @@ export const UserManagementPage: React.FC = () => {
       setSelectedDesignation('Dubbing Mentor');
     }
     setCustomDesignation('');
-    setInitialStaffPoints(targetUser.rankPoints > 0 ? targetUser.rankPoints : 2500);
+    setInitialStaffPoints(targetUser.rankPoints || 0);
   };
 
   const handleUpdateRole = async (e: React.FormEvent) => {
@@ -916,8 +915,33 @@ export const UserManagementPage: React.FC = () => {
                       />
                       <span className="text-xs font-mono text-slate-400">PTS</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-1">
-                      Staff rankings use dedicated staff tiers (Junior Reviewer, Associate, Director, Senior, Lead).
+
+                    {/* Dynamic Rank Preview */}
+                    {(() => {
+                      const tier = calculateRankFromPoints(initialStaffPoints);
+                      const staffInfo = STAFF_RANK_TIERS[tier];
+                      return (
+                        <div className="mt-2 p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="px-2 py-0.5 rounded font-black text-xs"
+                              style={{
+                                backgroundColor: `${staffInfo.colorHex}22`,
+                                color: staffInfo.colorHex,
+                                border: `1px solid ${staffInfo.colorHex}55`,
+                              }}
+                            >
+                              Rank {tier}
+                            </span>
+                            <span className="text-xs text-white font-medium">{staffInfo.designation}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">{staffInfo.level}</span>
+                        </div>
+                      );
+                    })()}
+
+                    <p className="text-[11px] text-slate-400 mt-1.5">
+                      Points directly determine rank: 0-4,999 (ED) • 5,000-11,999 (C) • 12,000-24,999 (B) • 25,000-49,999 (A) • 50,000+ (S).
                     </p>
                   </div>
                 </div>

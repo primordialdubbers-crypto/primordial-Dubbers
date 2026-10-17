@@ -80,7 +80,7 @@ router.get('/', optionalAuth, async (req: AuthenticatedRequest, res: Response) =
       // Format staff entries
       const staffData: StaffLeaderboardEntry[] = staffUsers.map((user) => {
         const profile = profileMap.get(user._id.toString());
-        const points = profile?.rankPoints ?? (user.roles.includes('admin') || user.roles.includes('superadmin') ? 10000 : 2500);
+        const points = profile?.rankPoints ?? 0;
         const staffRankInfo = calculateStaffRankFromPoints(points);
         const reviews = reviewCountMap.get(user._id.toString()) || 0;
 
