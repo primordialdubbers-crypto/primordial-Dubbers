@@ -92,6 +92,7 @@ export const AdminOverview: React.FC = () => {
   // Direct adjustment form state
   const [pointsRecipientType, setPointsRecipientType] = useState<'student' | 'staff'>('student');
   const [adjustStudentId, setAdjustStudentId] = useState<string>('');
+  const [userSearchQuery, setUserSearchQuery] = useState<string>('');
   const [artists, setArtists] = useState<ArtistItem[]>([]);
   const [staffList, setStaffList] = useState<ArtistItem[]>([]);
   const [isLoadingArtists, setIsLoadingArtists] = useState<boolean>(false);
@@ -194,6 +195,7 @@ export const AdminOverview: React.FC = () => {
               currentRank: u.currentRank || 'ED',
               rankPoints: u.rankPoints ?? 0,
               roles: u.roles,
+              staffDesignation: u.staffDesignation,
             }));
           setStaffList(staffUserList);
 
@@ -392,6 +394,16 @@ export const AdminOverview: React.FC = () => {
   };
 
   const currentList = pointsRecipientType === 'staff' ? staffList : artists;
+  const filteredList = currentList.filter((a) => {
+    if (!userSearchQuery.trim()) return true;
+    const q = userSearchQuery.toLowerCase().trim();
+    return (
+      a.displayName.toLowerCase().includes(q) ||
+      (a.email && a.email.toLowerCase().includes(q)) ||
+      (a.staffDesignation && a.staffDesignation.toLowerCase().includes(q)) ||
+      (a.roles && a.roles.some((r) => r.toLowerCase().includes(q)))
+    );
+  });
   const selectedArtist = currentList.find((a) => a.userId === adjustStudentId);
 
   return (
@@ -538,6 +550,7 @@ export const AdminOverview: React.FC = () => {
               type="button"
               onClick={() => {
                 setPointsRecipientType('student');
+                setUserSearchQuery('');
                 if (artists.length > 0) setAdjustStudentId(artists[0].userId);
                 applyPreset(50, 'training', 'Completed scheduled dubbing training session');
               }}
@@ -555,6 +568,7 @@ export const AdminOverview: React.FC = () => {
               type="button"
               onClick={() => {
                 setPointsRecipientType('staff');
+                setUserSearchQuery('');
                 if (staffList.length > 0) setAdjustStudentId(staffList[0].userId);
                 applyPreset(50, 'evaluation', 'Timely Audition Review & Scoring');
               }}
@@ -565,7 +579,7 @@ export const AdminOverview: React.FC = () => {
               }`}
             >
               <ShieldCheck size={14} className="text-amber-300" />
-              <span>👔 Staff & Casting Directors</span>
+              <span>👔 Academy Staff & Mentors</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 font-mono">
                 Staff Points
               </span>
@@ -665,13 +679,61 @@ export const AdminOverview: React.FC = () => {
 
           <form onSubmit={handleDirectAdjust} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* User Dropdown */}
-              <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  {pointsRecipientType === 'staff'
-                    ? 'Select Staff Member / Casting Director'
-                    : 'Select Voice Artist / Student'}
-                </label>
+              {/* User Dropdown with Name Search */}
+              <div className="md:col-span-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    {pointsRecipientType === 'staff'
+                      ? 'Select Staff Member (Search by Name / Role)'
+                      : 'Select Voice Artist (Search by Name / Email)'}
+                  </label>
+                  {userSearchQuery && (
+                    <span className="text-[10px] font-mono text-lime-sprout">
+                      Found {filteredList.length} of {currentList.length}
+                    </span>
+                  )}
+                </div>
+
+                {/* Instant Name / Email Search Box */}
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={userSearchQuery}
+                    onChange={(e) => {
+                      setUserSearchQuery(e.target.value);
+                      const q = e.target.value.toLowerCase().trim();
+                      if (q) {
+                        const firstMatch = currentList.find(
+                          (a) =>
+                            a.displayName.toLowerCase().includes(q) ||
+                            (a.email && a.email.toLowerCase().includes(q)) ||
+                            (a.staffDesignation && a.staffDesignation.toLowerCase().includes(q))
+                        );
+                        if (firstMatch) {
+                          setAdjustStudentId(firstMatch.userId);
+                        }
+                      }
+                    }}
+                    placeholder={
+                      pointsRecipientType === 'staff'
+                        ? '🔍 Type name (e.g. John, Mentor, Editor, Developer)...'
+                        : '🔍 Type artist name or email to quickly filter...'
+                    }
+                    className="w-full pl-9 pr-8 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-lime-sprout font-medium"
+                  />
+                  {userSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setUserSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdown populated from filteredList */}
                 <select
                   required
                   value={adjustStudentId}
@@ -683,11 +745,16 @@ export const AdminOverview: React.FC = () => {
                       ? '-- Choose academy staff member --'
                       : '-- Choose registered student --'}
                   </option>
-                  {(pointsRecipientType === 'staff' ? staffList : artists).map((a) => (
+                  {filteredList.map((a) => (
                     <option key={a.userId} value={a.userId}>
-                      {a.displayName} {a.email ? `(${a.email})` : ''} — Tier {a.currentRank} • {a.rankPoints.toLocaleString()} PTS {a.roles ? `[${a.roles.join(', ')}]` : ''}
+                      {a.displayName} {a.email ? `(${a.email})` : ''} {a.staffDesignation ? `— [${a.staffDesignation}]` : ''} — Tier {a.currentRank} • {a.rankPoints.toLocaleString()} PTS
                     </option>
                   ))}
+                  {filteredList.length === 0 && (
+                    <option disabled value="">
+                      No users match "{userSearchQuery}"
+                    </option>
+                  )}
                 </select>
               </div>
 

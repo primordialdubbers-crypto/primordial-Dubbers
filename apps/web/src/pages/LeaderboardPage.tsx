@@ -239,19 +239,28 @@ export const LeaderboardPage: React.FC = () => {
                         />
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {staff.roles.map((r) => (
-                            <span
-                              key={r}
-                              className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-semibold ${
-                                r === 'superadmin' || r === 'admin'
-                                  ? 'bg-rose-950/80 text-rose-300 border border-rose-800/50'
-                                  : 'bg-indigo-950/80 text-indigo-300 border border-indigo-800/50'
-                              }`}
-                            >
-                              {r === 'director' ? 'Casting Director' : r}
+                        <div className="flex flex-col gap-1 items-start">
+                          <div className="flex flex-wrap gap-1">
+                            {staff.roles.map((r) => (
+                              <span
+                                key={r}
+                                className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-semibold ${
+                                  r === 'superadmin'
+                                    ? 'bg-amber-950/80 text-amber-300 border border-amber-800/50'
+                                    : r === 'admin'
+                                    ? 'bg-rose-950/80 text-rose-300 border border-rose-800/50'
+                                    : 'bg-sky-950/80 text-sky-300 border border-sky-800/50'
+                                }`}
+                              >
+                                {r === 'superadmin' ? 'Superadmin' : r === 'admin' ? 'Admin' : 'Staff / Director'}
+                              </span>
+                            ))}
+                          </div>
+                          {staff.staffDesignation && (
+                            <span className="text-[10px] font-mono text-amber-300/90 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-800/40">
+                              {staff.staffDesignation}
                             </span>
-                          ))}
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center font-mono">

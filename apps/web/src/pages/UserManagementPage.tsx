@@ -875,14 +875,18 @@ export const UserManagementPage: React.FC = () => {
                       onChange={(e) => setSelectedDesignation(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-sky-500"
                     >
-                      <option value="Dubbing Mentor">🎙️ Dubbing Mentor</option>
-                      <option value="Senior Mentor">🌟 Senior Mentor</option>
+                      <option value="Mentor">🎙️ Mentor / Dubbing Mentor</option>
+                      <option value="Editor">✂️ Video / Dialogue Editor</option>
+                      <option value="Developer">💻 Developer / Tech Lead</option>
+                      <option value="Sound Engineer">🎧 Sound Engineer / Mixer</option>
                       <option value="Studio Manager">🎬 Studio Manager</option>
                       <option value="Production Manager">📋 Production Manager</option>
                       <option value="Casting Director">👥 Casting Director</option>
+                      <option value="Staff">👔 Staff Member</option>
+                      <option value="Senior Mentor">🌟 Senior Mentor</option>
                       <option value="Associate Director">🎯 Associate Director</option>
                       <option value="Lead Executive Director">👑 Lead Executive Director</option>
-                      <option value="custom">✏️ Custom Designation...</option>
+                      <option value="custom">✏️ Create Custom Role / Designation...</option>
                     </select>
                   </div>
 
