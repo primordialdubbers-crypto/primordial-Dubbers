@@ -156,4 +156,45 @@ describe('Leaderboard API (/api/v1/leaderboard)', () => {
     expect(staffEntry.staffDesignation).toBe('Senior Director');
     expect(staffEntry.rankPoints).toBe(6500);
   });
+
+  it('strictly excludes suspended and deleted accounts from the leaderboard', async () => {
+    // 1. Create a student user and profile
+    const testStudent = await User.create({
+      email: 'tobedeleted@example.com',
+      displayName: 'Temporary Voice Artist',
+      passwordHash: 'hash',
+      roles: ['student'],
+      status: 'active',
+    });
+    const testProfile = await ArtistProfile.create({
+      userId: testStudent._id,
+      displayName: 'Temporary Voice Artist',
+      rankPoints: 18000,
+      currentRank: 'B',
+      publicOptIn: true,
+      performanceAverage: 88,
+    });
+
+    // Verify they show up when active
+    let res = await request(app).get('/api/v1/leaderboard');
+    expect(res.body.data.leaderboard.some((i: any) => i.displayName === 'Temporary Voice Artist')).toBe(true);
+
+    // 2. Suspend the user
+    testStudent.status = 'suspended';
+    await testStudent.save();
+
+    // Verify suspended user is immediately excluded from leaderboard
+    res = await request(app).get('/api/v1/leaderboard');
+    expect(res.body.data.leaderboard.some((i: any) => i.displayName === 'Temporary Voice Artist')).toBe(false);
+
+    // 3. Delete the user (simulate admin deletion with orphan profile)
+    await User.findByIdAndDelete(testStudent._id);
+
+    // Verify deleted user is excluded even if orphaned profile exists
+    res = await request(app).get('/api/v1/leaderboard');
+    expect(res.body.data.leaderboard.some((i: any) => i.displayName === 'Temporary Voice Artist')).toBe(false);
+
+    // Cleanup orphan profile
+    await ArtistProfile.findByIdAndDelete(testProfile._id);
+  });
 });

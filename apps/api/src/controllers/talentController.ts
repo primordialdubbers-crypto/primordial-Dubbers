@@ -51,6 +51,11 @@ export class TalentController {
         filter.$or = [{ displayName: regex }, { bio: regex }];
       }
 
+      // Find active user IDs to ensure deleted or suspended accounts never appear
+      const activeUsers = await User.find({ status: 'active' }).select('_id').lean();
+      const activeUserIds = activeUsers.map((u) => u._id);
+      filter.userId = { $in: activeUserIds };
+
       const [profiles, total] = await Promise.all([
         ArtistProfile.find(filter)
           .sort({ rankPoints: -1, performanceAverage: -1 })

@@ -82,11 +82,24 @@ export async function ensureAdminUser(): Promise<void> {
     console.log(`[PDI MongoDB Init] Updated admin profile to staff type in MongoDB: ${adminEmail}`);
   }
 
-  // Automatically purge legacy static demo accounts from MongoDB (e.g. admin@pdi.academy, director@pdi.academy)
+  // Automatically purge legacy static demo accounts & orphaned artist profiles from MongoDB
   if (config.nodeEnv !== 'test') {
     try {
       const dummyUsers = await User.find({
-        email: { $in: ['admin@pdi.academy', 'director@pdi.academy', /@pdi\.academy$/i] },
+        email: {
+          $in: [
+            'admin@pdi.academy',
+            'director@pdi.academy',
+            'aarav@pdi.academy',
+            'pooja@pdi.academy',
+            'vikram@pdi.academy',
+            'meera@pdi.academy',
+            'kabir@pdi.academy',
+            'ananya@pdi.academy',
+            'rohan@pdi.academy',
+            /@pdi\.academy$/i,
+          ],
+        },
         _id: { $ne: adminUser._id },
       });
 
@@ -97,8 +110,22 @@ export async function ensureAdminUser(): Promise<void> {
           console.log(`[PDI MongoDB Init] Purged static dummy user from database: ${dUser.email}`);
         }
       }
+
+      // Also purge any orphaned artist profiles where the user no longer exists
+      const allProfiles = await ArtistProfile.find({}).select('_id userId').lean();
+      const existingUsers = await User.find({}).select('_id').lean();
+      const existingUserSet = new Set(existingUsers.map((u) => u._id.toString()));
+
+      const orphanedProfileIds = allProfiles
+        .filter((p) => !existingUserSet.has(p.userId?.toString()))
+        .map((p) => p._id);
+
+      if (orphanedProfileIds.length > 0) {
+        await ArtistProfile.deleteMany({ _id: { $in: orphanedProfileIds } });
+        console.log(`[PDI MongoDB Init] Cleaned up ${orphanedProfileIds.length} orphaned artist profile(s).`);
+      }
     } catch (cleanupErr) {
-      console.warn('[PDI MongoDB Init] Error cleaning up static users:', cleanupErr);
+      console.warn('[PDI MongoDB Init] Error cleaning up static/orphaned users:', cleanupErr);
     }
   }
 }

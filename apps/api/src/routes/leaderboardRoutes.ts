@@ -46,9 +46,10 @@ router.get('/', optionalAuth, async (req: AuthenticatedRequest, res: Response) =
         return;
       }
 
-      // Query staff users (admin, superadmin, director)
+      // Query active staff users (admin, superadmin, director)
       const staffUserFilter: Record<string, any> = {
         roles: { $in: ['admin', 'director', 'superadmin'] },
+        status: 'active',
       };
 
       if (search && search.trim().length > 0) {
@@ -121,9 +122,16 @@ router.get('/', optionalAuth, async (req: AuthenticatedRequest, res: Response) =
       return;
     }
 
-    // --- STUDENT / VOICE ARTIST LEADERBOARD BRANCH (Default Public) ---
-    // Strictly excludes staff profiles
+    // Find all active student users
+    const activeStudentUsers = await User.find({
+      status: 'active',
+      roles: { $nin: ['admin', 'superadmin', 'director'] },
+    }).select('_id').lean();
+    const activeStudentUserIds = activeStudentUsers.map((u) => u._id);
+
+    // Strictly excludes staff profiles and users who are deleted or suspended
     const filter: Record<string, any> = {
+      userId: { $in: activeStudentUserIds },
       publicOptIn: true,
       profileType: { $ne: 'staff' },
     };
