@@ -19,6 +19,9 @@ import {
   KeyRound,
   UserCog,
   Award,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 
 export const UserManagementPage: React.FC = () => {
@@ -52,6 +55,44 @@ export const UserManagementPage: React.FC = () => {
 
   // Status Update State
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+
+  // Sorting state for User Directory table headers
+  const [sortField, setSortField] = useState<'displayName' | 'rankPoints' | 'status' | 'createdAt' | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const handleSortToggle = (field: 'displayName' | 'rankPoints' | 'status' | 'createdAt') => {
+    if (sortField === field) {
+      if (sortOrder === 'asc') {
+        setSortOrder('desc');
+      } else {
+        // Reset sorting to default server order
+        setSortField(null);
+        setSortOrder('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const sortedUsers = React.useMemo(() => {
+    if (!sortField) return users;
+    return [...users].sort((a, b) => {
+      let comparison = 0;
+      if (sortField === 'displayName') {
+        comparison = a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' });
+      } else if (sortField === 'rankPoints') {
+        comparison = (a.rankPoints ?? 0) - (b.rankPoints ?? 0);
+      } else if (sortField === 'status') {
+        comparison = a.status.localeCompare(b.status);
+      } else if (sortField === 'createdAt') {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        comparison = dateA - dateB;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [users, sortField, sortOrder]);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -393,17 +434,94 @@ export const UserManagementPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse min-w-[650px]">
               <thead>
-                <tr className="border-b border-pdi-border bg-slate-950/60 font-mono uppercase text-[10px] text-slate-400">
-                  <th className="py-3.5 px-4">User / Artist</th>
-                  <th className="py-3.5 px-4">Roles</th>
-                  <th className="py-3.5 px-4">Rank & Verified Points</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Registered</th>
+                <tr className="border-b border-pdi-border bg-slate-950/60 font-mono uppercase text-[10px] text-slate-400 select-none">
+                  {/* User / Artist (Name A-Z / Z-A) */}
+                  <th
+                    onClick={() => handleSortToggle('displayName')}
+                    className="py-3.5 px-4 cursor-pointer hover:text-white transition-colors group"
+                    title="Click to sort A-Z or Z-A"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>User / Artist</span>
+                      {sortField === 'displayName' ? (
+                        sortOrder === 'asc' ? (
+                          <ArrowUp size={12} className="text-lime-sprout" />
+                        ) : (
+                          <ArrowDown size={12} className="text-lime-sprout" />
+                        )
+                      ) : (
+                        <ArrowUpDown size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                      )}
+                    </div>
+                  </th>
+
+                  <th className="py-3.5 px-4">Roles & Designation</th>
+
+                  {/* Rank & Verified Points (Highest / Lowest) */}
+                  <th
+                    onClick={() => handleSortToggle('rankPoints')}
+                    className="py-3.5 px-4 cursor-pointer hover:text-white transition-colors group"
+                    title="Click to sort Highest to Lowest Points"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Rank & Verified Points</span>
+                      {sortField === 'rankPoints' ? (
+                        sortOrder === 'asc' ? (
+                          <ArrowUp size={12} className="text-lime-sprout" />
+                        ) : (
+                          <ArrowDown size={12} className="text-lime-sprout" />
+                        )
+                      ) : (
+                        <ArrowUpDown size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                      )}
+                    </div>
+                  </th>
+
+                  {/* Status (Active / Suspended) */}
+                  <th
+                    onClick={() => handleSortToggle('status')}
+                    className="py-3.5 px-4 cursor-pointer hover:text-white transition-colors group"
+                    title="Click to sort by Status"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Status</span>
+                      {sortField === 'status' ? (
+                        sortOrder === 'asc' ? (
+                          <ArrowUp size={12} className="text-lime-sprout" />
+                        ) : (
+                          <ArrowDown size={12} className="text-lime-sprout" />
+                        )
+                      ) : (
+                        <ArrowUpDown size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                      )}
+                    </div>
+                  </th>
+
+                  {/* Registered Date */}
+                  <th
+                    onClick={() => handleSortToggle('createdAt')}
+                    className="py-3.5 px-4 cursor-pointer hover:text-white transition-colors group"
+                    title="Click to sort by Registration Date"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Registered</span>
+                      {sortField === 'createdAt' ? (
+                        sortOrder === 'asc' ? (
+                          <ArrowUp size={12} className="text-lime-sprout" />
+                        ) : (
+                          <ArrowDown size={12} className="text-lime-sprout" />
+                        )
+                      ) : (
+                        <ArrowUpDown size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                      )}
+                    </div>
+                  </th>
+
                   <th className="py-3.5 px-4 text-right">Moderation Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-pdi-border">
-                {users.map((u) => {
+                {sortedUsers.map((u) => {
                   const isSelf = user?.id === u.id;
                   const isProtected = isProtectedRootAdmin(u.email);
 

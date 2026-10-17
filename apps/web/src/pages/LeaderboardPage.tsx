@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { RankBadge } from '../components/RankBadge';
 import { StaffBadge } from '../components/StaffBadge';
 import { RankTier, StaffLeaderboardEntry } from '@pdi/shared';
-import { Trophy, Search, Loader2, Users, ShieldCheck, CheckCircle2, Award } from 'lucide-react';
+import { Trophy, Search, Loader2, Users, ShieldCheck, CheckCircle2, Award, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface StudentLeaderboardItem {
   id: string;
@@ -31,6 +31,63 @@ export const LeaderboardPage: React.FC = () => {
   const [staffList, setStaffList] = useState<StaffLeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Sorting state for Leaderboard table headers (A-Z Name or Points)
+  const [sortField, setSortField] = useState<'name' | 'points' | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const handleSortToggle = (field: 'name' | 'points') => {
+    if (sortField === field) {
+      if (field === 'name') {
+        // Name toggles: asc (A-Z) -> desc (Z-A) -> default
+        if (sortOrder === 'asc') setSortOrder('desc');
+        else {
+          setSortField(null);
+          setSortOrder('desc');
+        }
+      } else {
+        // Points toggles: desc (High-Low) -> asc (Low-High) -> default
+        if (sortOrder === 'desc') setSortOrder('asc');
+        else {
+          setSortField(null);
+          setSortOrder('desc');
+        }
+      }
+    } else {
+      setSortField(field);
+      setSortOrder(field === 'name' ? 'asc' : 'desc');
+    }
+  };
+
+  const sortedStudents = React.useMemo(() => {
+    if (!sortField) return students;
+    return [...students].sort((a, b) => {
+      if (sortField === 'name') {
+        const comp = a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' });
+        return sortOrder === 'asc' ? comp : -comp;
+      }
+      if (sortField === 'points') {
+        const comp = (a.rankPoints ?? 0) - (b.rankPoints ?? 0);
+        return sortOrder === 'asc' ? comp : -comp;
+      }
+      return 0;
+    });
+  }, [students, sortField, sortOrder]);
+
+  const sortedStaffList = React.useMemo(() => {
+    if (!sortField) return staffList;
+    return [...staffList].sort((a, b) => {
+      if (sortField === 'name') {
+        const comp = a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' });
+        return sortOrder === 'asc' ? comp : -comp;
+      }
+      if (sortField === 'points') {
+        const comp = (a.rankPoints ?? 0) - (b.rankPoints ?? 0);
+        return sortOrder === 'asc' ? comp : -comp;
+      }
+      return 0;
+    });
+  }, [staffList, sortField, sortOrder]);
 
   useEffect(() => {
     let isMounted = true;
@@ -204,17 +261,56 @@ export const LeaderboardPage: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs min-w-[580px]">
                 <thead className="bg-slate-900/90 text-slate-400 font-mono uppercase tracking-wider border-b border-slate-800">
-                  <tr>
-                    <th className="px-6 py-4">Rank</th>
-                    <th className="px-6 py-4">Staff Member</th>
+                  <tr className="select-none">
+                    <th className="px-6 py-4">Standing</th>
+
+                    {/* Staff Member (Alphabetical A-Z / Z-A) */}
+                    <th
+                      onClick={() => handleSortToggle('name')}
+                      className="px-6 py-4 cursor-pointer hover:text-white transition-colors group"
+                      title="Click to sort A-Z or Z-A"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>Staff Member</span>
+                        {sortField === 'name' ? (
+                          sortOrder === 'asc' ? (
+                            <ArrowUp size={12} className="text-amber-400" />
+                          ) : (
+                            <ArrowDown size={12} className="text-amber-400" />
+                          )
+                        ) : (
+                          <ArrowUpDown size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                        )}
+                      </div>
+                    </th>
+
                     <th className="px-6 py-4">Leadership Designation</th>
                     <th className="px-6 py-4">Roles & Clearance</th>
                     <th className="px-6 py-4 text-center">Reviews Conducted</th>
-                    <th className="px-6 py-4 text-right">Staff Merit Points</th>
+
+                    {/* Staff Merit Points (Highest / Lowest) */}
+                    <th
+                      onClick={() => handleSortToggle('points')}
+                      className="px-6 py-4 text-right cursor-pointer hover:text-white transition-colors group"
+                      title="Click to sort Highest to Lowest Points"
+                    >
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span>Staff Merit Points</span>
+                        {sortField === 'points' ? (
+                          sortOrder === 'asc' ? (
+                            <ArrowUp size={12} className="text-amber-400" />
+                          ) : (
+                            <ArrowDown size={12} className="text-amber-400" />
+                          )
+                        ) : (
+                          <ArrowUpDown size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                        )}
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-slate-200">
-                  {staffList.map((staff, idx) => (
+                  {sortedStaffList.map((staff, idx) => (
                     <tr key={staff.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="px-6 py-4 font-mono font-bold text-slate-400">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-800 text-white font-mono text-xs">
@@ -291,17 +387,56 @@ export const LeaderboardPage: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs min-w-[580px]">
                 <thead className="bg-slate-900/90 text-slate-400 font-mono uppercase tracking-wider border-b border-slate-800">
-                  <tr>
+                  <tr className="select-none">
                     <th className="px-6 py-4">Standing</th>
-                    <th className="px-6 py-4">Voice Artist</th>
+
+                    {/* Voice Artist (A-Z / Z-A) */}
+                    <th
+                      onClick={() => handleSortToggle('name')}
+                      className="px-6 py-4 cursor-pointer hover:text-white transition-colors group"
+                      title="Click to sort A-Z or Z-A"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>Voice Artist</span>
+                        {sortField === 'name' ? (
+                          sortOrder === 'asc' ? (
+                            <ArrowUp size={12} className="text-cyber-lime" />
+                          ) : (
+                            <ArrowDown size={12} className="text-cyber-lime" />
+                          )
+                        ) : (
+                          <ArrowUpDown size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                        )}
+                      </div>
+                    </th>
+
                     <th className="px-6 py-4">Rank Tier</th>
                     <th className="px-6 py-4">Voice Specialties</th>
                     <th className="px-6 py-4 text-right">Rubric Avg</th>
-                    <th className="px-6 py-4 text-right">Rank Points</th>
+
+                    {/* Rank Points (Highest / Lowest) */}
+                    <th
+                      onClick={() => handleSortToggle('points')}
+                      className="px-6 py-4 text-right cursor-pointer hover:text-white transition-colors group"
+                      title="Click to sort Highest to Lowest Points"
+                    >
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span>Rank Points</span>
+                        {sortField === 'points' ? (
+                          sortOrder === 'asc' ? (
+                            <ArrowUp size={12} className="text-cyber-lime" />
+                          ) : (
+                            <ArrowDown size={12} className="text-cyber-lime" />
+                          )
+                        ) : (
+                          <ArrowUpDown size={11} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                        )}
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-slate-200">
-                  {students.map((artist, idx) => (
+                  {sortedStudents.map((artist, idx) => (
                     <tr key={artist.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="px-6 py-4 font-mono font-bold text-slate-400">
                         #{idx + 1}
