@@ -16,8 +16,8 @@ const isNative =
     (window.location.hostname === 'localhost' && !window.location.port));
 
 const RAW_API_URL = isNative
-  ? import.meta.env.VITE_API_URL || 'https://pdi-voice-ranking.up.railway.app'
-  : '';
+  ? import.meta.env.VITE_API_URL || 'https://primordial-dubbers.onrender.com'
+  : (import.meta.env.VITE_API_URL || '');
 const API_BASE_URL = RAW_API_URL ? RAW_API_URL.replace(/\/$/, '') : '';
 
 window.fetch = function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {

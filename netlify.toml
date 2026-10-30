@@ -1,0 +1,21 @@
+[build]
+  base = "apps/web"
+  publish = "apps/web/dist"
+  command = "npm run build --workspace=@pdi/shared && npm run build --workspace=@pdi/web"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://primordial-dubbers.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/uploads/*"
+  to = "https://primordial-dubbers.onrender.com/uploads/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
